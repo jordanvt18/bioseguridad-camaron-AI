@@ -1,0 +1,54 @@
+version: "3.9"
+
+services:
+  api:
+    build: .
+    container_name: bioseguridad-api
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - MODEL_PATH=./models
+      - DATA_PATH=./data
+      - LOG_LEVEL=INFO
+    volumes:
+      - api-data:/app/data
+      - api-models:/app/models
+    depends_on:
+      - redis
+    networks:
+      - bioseguridad-net
+    restart: unless-stopped
+
+  web:
+    image: nginx:alpine
+    container_name: bioseguridad-web
+    ports:
+      - "80:80"
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
+    depends_on:
+      - api
+    networks:
+      - bioseguridad-net
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: bioseguridad-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - bioseguridad-net
+    restart: unless-stopped
+
+volumes:
+  api-data:
+  api-models:
+  redis-data:
+
+networks:
+  bioseguridad-net:
+    driver: bridge

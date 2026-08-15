@@ -1,0 +1,33 @@
+{
+  "model_type": "RandomForest + OneClassSVM (ensemble)",
+  "input_features": [
+    "ph",
+    "dissolved_oxygen",
+    "salinity",
+    "turbidity",
+    "temperature",
+    "ammonia"
+  ],
+  "feature_engineering": "sliding_window_stats (mean, std, min, max, last, trend, deviation)",
+  "lookback": 24,
+  "lookback_hours": 6.0,
+  "train_samples": 30155,
+  "val_samples": 6462,
+  "test_samples": 6463,
+  "rf_metrics": {
+    "auc": 0.9857347389550717,
+    "f1": 0.9526248399487837,
+    "precision": 0.9973190348525469,
+    "accuracy": 0.9828253133219867,
+    "precision_at_k": 0.9969040247678018
+  },
+  "combined_metrics": {
+    "auc": 0.9645619143502663,
+    "f1": 0.9526248399487837,
+    "precision": 0.9973190348525469
+  },
+  "data_source": "Real shrimp production data (472 records from 174 ponds) + sensor data generated from literature ranges (Islam 2023, Suasono 2025, Kajornkasirat 2021)",
+  "n_ponds": 5,
+  "outbreak_rate": 0.204375,
+  "outbreak_threshold": "stress_score >= 4 (pH<6.8, DO<3.5, NH3>1.5, temp>33, turbidity>70)"
+}

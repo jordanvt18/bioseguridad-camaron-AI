@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Bioseguridad Inteligente para Camarón</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a1929;
+            --bg-secondary: #132f4c;
+            --bg-card: #1a3a5c;
+            --bg-card-hover: #234a73;
+            --text-primary: #e3f2fd;
+            --text-secondary: #90caf9;
+            --text-muted: #5c7a9c;
+            --accent-blue: #42a5f5;
+            --accent-green: #66bb6a;
+            --accent-yellow: #ffa726;
+            --accent-orange: #ff7043;
+            --accent-red: #ef5350;
+            --accent-cyan: #26c6da;
+            --accent-purple: #ab47bc;
+            --border-color: #1e4976;
+            --shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0d47a1, #1565c0);
+            padding: 18px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .header-logo {
+            font-size: 32px;
+        }
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .header h1 small {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            background: var(--bg-secondary);
+            padding: 0 30px;
+            gap: 4px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .nav-tab {
+            padding: 14px 24px;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .nav-tab:hover { color: var(--text-secondary); background: rgba(255,255,255,0.03); }
+        .nav-tab.active {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+        }
+
+        /* Main content */
+        .main-content {
+            padding: 24px 30px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* Grid layouts */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .card-body { font-size: 14px; }
+
+        /* KPI Cards */
+        .kpi-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid var(--accent-blue);
+            box-shadow: var(--shadow);
+        }
+        .kpi-card.green { border-left-color: var(--accent-green); }
+        .kpi-card.yellow { border-left-color: var(--accent-yellow); }
+        .kpi-card.red { border-left-color: var(--accent-red); }
+        .kpi-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .kpi-unit {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+        .kpi-trend {
+            font-size: 12px;
+            margin-top: 6px;
+        }
+        .kpi-trend.up { color: var(--accent-green); }
+        .kpi-trend.down { color: var(--accent-red); }
+
+        /* Risk badges */
+        .risk-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .risk-bajo { background: rgba(102,187,106,0.2); color: var(--accent-green); }
+        .risk-medio { background: rgba(255,167,38,0.2); color: var(--accent-yellow); }
+        .risk-alto { background: rgba(255,112,67,0.2); color: var(--accent-orange); }
+        .risk-critico { background: rgba(239,83,80,0.2); color: var(--accent-red); }
+
+        /* Pond selector */
+        .pond-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .pond-chip {
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        .pond-chip:hover { background: var(--bg-card-hover); }
+        .pond-chip.active {
+            background: var(--accent-blue);
+            color: #fff;
+            border-color: var(--accent-blue);
+        }
+
+        /* Sensor cards */
+        .sensor-card {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+        .sensor-icon { font-size: 28px; margin-bottom: 8px; }
+        .sensor-name { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+        .sensor-value { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+        .sensor-unit { font-size: 12px; color: var(--text-muted); }
+        .sensor-status {
+            font-size: 11px;
+            margin-top: 6px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        .sensor-ok { background: rgba(102,187,106,0.15); color: var(--accent-green); }
+        .sensor-warn { background: rgba(255,167,38,0.15); color: var(--accent-yellow); }
+        .sensor-alert { background: rgba(239,83,80,0.15); color: var(--accent-red); }
+
+        /* Action panel */
+        .action-panel {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+        .action-item {
+            display: flex;
+            align-items: center;
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: var(--bg-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .action-item:hover { background: var(--bg-card-hover); }
+        .action-item.recommended { border-color: var(--accent-green); }
+        .action-icon { font-size: 24px; margin-right: 14px; }
+        .action-info { flex: 1; }
+        .action-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+        .action-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .action-cost { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+
+        /* Economic table */
+        .econ-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .econ-table th {
+            text-align: left;
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .econ-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .econ-table tr:hover { background: var(--bg-secondary); }
+        .profit-positive { color: var(--accent-green); font-weight: 600; }
+        .profit-negative { color: var(--accent-red); font-weight: 600; }
+
+        /* Chart containers */
+        .chart-container {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Farm risk map */
+        .risk-map-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .farm-pond {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 16px;
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .farm-pond:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.3); }
+        .farm-pond.risk-bajo { border-color: var(--accent-green); }
+        .farm-pond.risk-medio { border-color: var(--accent-yellow); }
+        .farm-pond.risk-alto { border-color: var(--accent-orange); }
+        .farm-pond.risk-critico { border-color: var(--accent-red); }
+
+        /* Alert banner */
+        .alert-banner {
+            background: linear-gradient(135deg, rgba(239,83,80,0.15), rgba(255,112,67,0.15));
+            border: 1px solid var(--accent-red);
+            border-radius: 10px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .alert-icon { font-size: 24px; }
+        .alert-text { flex: 1; }
+        .alert-title { font-size: 14px; font-weight: 600; color: var(--accent-red); }
+        .alert-desc { font-size: 13px; color: var(--text-secondary); }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+        .btn-primary:hover { background: #1e88e5; }
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .btn-secondary:hover { background: var(--bg-card-hover); }
+
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10,25,41,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        .loading-overlay.active { display: flex; }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--bg-secondary);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .grid-4 { grid-template-columns: repeat(2, 1fr); }
+            .grid-3 { grid-template-columns: 1fr; }
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            .grid-4 { grid-template-columns: 1fr; }
+            .nav-tabs { padding: 0 16px; overflow-x: auto; }
+            .main-content { padding: 16px; }
+            .header h1 { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <span class="header-logo">🦐</span>
+            <h1>Simulador de Bioseguridad Inteligente para Camarón
+                <small>Sistema de predicción de brotes y recomendación de políticas óptimas</small>
+            </h1>
+        </div>
+        <div class="header-right">
+            <div class="header-status">
+                <span class="status-dot"></span>
+                <span id="systemStatus">Sistema operativo | Modelo: AUC 0.986 | F1 0.953</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav-tabs">
+        <div class="nav-tab active" onclick="switchTab('monitor')">📡 Monitoreo</div>
+        <div class="nav-tab" onclick="switchTab('risk')">⚠️ Mapa de Riesgo</div>
+        <div class="nav-tab" onclick="switchTab('actions')">🎯 Recomendaciones</div>
+        <div class="nav-tab" onclick="switchTab('economic')">💰 Simulador Económico</div>
+    </div>
+
+    <div class="main-content">
+        <!-- TAB: Monitoreo -->
+        <div id="tab-monitor" class="tab-panel active">
+            <!-- Alert banner -->
+            <div id="alertBanner" class="alert-banner" style="display:none;">
+                <span class="alert-icon">🚨</span>
+                <div class="alert-text">
+                    <div class="alert-title" id="alertTitle">Alerta de Riesgo Crítico</div>
+                    <div class="alert-desc" id="alertDesc">Piscina P-003 presenta probabilidad de brote del 87%</div>
+                </div>
+                <button class="btn btn-secondary" onclick="dismissAlert()">Cerrar</button>
+            </div>
+
+            <!-- Pond selector -->
+            <div class="pond-selector" id="pondSelector"></div>
+
+            <!-- KPI Row -->
+            <div class="grid-4" style="margin-bottom: 20px;">
+                <div class="kpi-card" id="kpiRisk">
+                    <div class="kpi-label">Probabilidad de Brote</div>
+                    <div class="kpi-value" id="kpiRiskValue">--<span class="kpi-unit">%</span></div>
+                    <div class="kpi-trend" id="kpiRiskTrend"></div>
+                </div>
+                <div class="kpi-card green" id="kpiMortality">
+                    <div class="kpi-label">Tasa de Mortalidad</div>
+                    <div class="kpi-value" id="kpiMortalityValue">--<span class="kpi-unit">%</span></div>
+                    <div class="kpi-trend" id="kpiMortalityTrend"></div>
+                </div>
+                <div class="kpi-card yellow" id="kpiDensity">
+                    <div class="kpi-label">Densidad Actual</div>
+                    <div class="kpi-value" id="kpiDensityValue">--<span class="kpi-unit"> ind/m²</span></div>
+                    <div class="kpi-trend" id="kpiDensityTrend"></div>
+                </div>
+                <div class="kpi-card" id="kpiDays">
+                    <div class="kpi-label">Días de Cultivo</div>
+                    <div class="kpi-value" id="kpiDaysValue">--<span class="kpi-unit"> días</span></div>
+                    <div class="kpi-trend" id="kpiDaysTrend"></div>
+                </div>
+            </div>
+
+            <!-- Sensor cards -->
+            <div class="grid-4" style="margin-bottom: 20px;">
+                <div class="sensor-card">
+                    <div class="sensor-icon">🧪</div>
+                    <div class="sensor-name">pH</div>
+                    <div class="sensor-value" id="sensorPh">--</div>
+                    <div class="sensor-unit">unidades</div>
+                    <div class="sensor-status sensor-ok" id="sensorPhStatus">Normal</div>
+                </div>
+                <div class="sensor-card">
+                    <div class="sensor-icon">💨</div>
+                    <div class="sensor-name">Oxígeno Disuelto</div>
+                    <div class="sensor-value" id="sensorDo">--</div>
+                    <div class="sensor-unit">mg/L</div>
+                    <div class="sensor-status sensor-ok" id="sensorDoStatus">Normal</div>
+                </div>
+                <div class="sensor-card">
+                    <div class="sensor-icon">🧂</div>
+                    <div class="sensor-name">Salinidad</div>
+                    <div class="sensor-value" id="sensorSal">--</div>
+                    <div class="sensor-unit">ppt</div>
+                    <div class="sensor-status sensor-ok" id="sensorSalStatus">Normal</div>
+                </div>
+                <div class="sensor-card">
+                    <div class="sensor-icon">🌫️</div>
+                    <div class="sensor-name">Turbidez</div>
+                    <div class="sensor-value" id="sensorTurb">--</div>
+                    <div class="sensor-unit">NTU</div>
+                    <div class="sensor-status sensor-ok" id="sensorTurbStatus">Normal</div>
+                </div>
+            </div>
+            <div class="grid-4" style="margin-bottom: 20px;">
+                <div class="sensor-card">
+                    <div class="sensor-icon">🌡️</div>
+                    <div class="sensor-name">Temperatura</div>
+                    <div class="sensor-value" id="sensorTemp">--</div>
+                    <div class="sensor-unit">°C</div>
+                    <div class="sensor-status sensor-ok" id="sensorTempStatus">Normal</div>
+                </div>
+                <div class="sensor-card">
+                    <div class="sensor-icon">⚠️</div>
+                    <div class="sensor-name">Amonio</div>
+                    <div class="sensor-value" id="sensorNh3">--</div>
+                    <div class="sensor-unit">mg/L</div>
+                    <div class="sensor-status sensor-ok" id="sensorNh3Status">Normal</div>
+                </div>
+                <div class="sensor-card">
+                    <div class="sensor-icon">🐟</div>
+                    <div class="sensor-name">Alimentación</div>
+                    <div class="sensor-value" id="sensorFeed">--</div>
+                    <div class="sensor-unit">kg/día</div>
+                    <div class="sensor-status sensor-ok" id="sensorFeedStatus">Normal</div>
+                </div>
+                <div class="sensor-card">
+                    <div class="sensor-icon">📊</div>
+                    <div class="sensor-name">Crecimiento</div>
+                    <div class="sensor-value" id="sensorGrowth">--</div>
+                    <div class="sensor-unit">g</div>
+                    <div class="sensor-status sensor-ok" id="sensorGrowthStatus">Normal</div>
+                </div>
+            </div>
+
+            <!-- Time series charts -->
+            <div class="grid-2">
+                <div class="chart-container">
+                    <div class="card-header">
+                        <span class="card-title">Series Temporales de Sensores (24h)</span>
+                    </div>
+                    <div id="chartSensorTime" style="height: 350px;"></div>
+                </div>
+                <div class="chart-container">
+                    <div class="card-header">
+                        <span class="card-title">Probabilidad de Brote (7 días)</span>
+                    </div>
+                    <div id="chartOutbreakProb" style="height: 350px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Risk Map -->
+        <div id="tab-risk" class="tab-panel">
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="card-header">
+                    <span class="card-title">Mapa de Riesgo por Granja</span>
+                    <div>
+                        <button class="btn btn-secondary" onclick="refreshRiskMap()">🔄 Actualizar</button>
+                    </div>
+                </div>
+                <div id="farmRiskMap" class="risk-map-container"></div>
+            </div>
+            <div class="chart-container">
+                <div class="card-header">
+                    <span class="card-title">Distribución de Riesgo por Granja</span>
+                </div>
+                <div id="chartRiskDist" style="height: 400px;"></div>
+            </div>
+        </div>
+
+        <!-- TAB: Actions -->
+        <div id="tab-actions" class="tab-panel">
+            <div class="grid-2">
+                <div class="action-panel">
+                    <div class="card-header">
+                        <span class="card-title">Acciones Recomendadas</span>
+                        <span id="recommendationConfidence" class="risk-badge risk-bajo">Confianza: --</span>
+                    </div>
+                    <div id="actionList"></div>
+                </div>
+                <div class="action-panel">
+                    <div class="card-header">
+                        <span class="card-title">Detalle de la Recomendación</span>
+                    </div>
+                    <div id="actionDetail">
+                        <p style="color: var(--text-muted); text-align: center; padding: 40px;">
+                            Seleccione una piscina en la pestaña de Monitoreo para ver recomendaciones detalladas.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container" style="margin-top: 20px;">
+                <div class="card-header">
+                    <span class="card-title">Histórico de Acciones Recomendadas (30 días)</span>
+                </div>
+                <div id="chartActionHistory" style="height: 350px;"></div>
+            </div>
+        </div>
+
+        <!-- TAB: Economic Simulator -->
+        <div id="tab-economic" class="tab-panel">
+            <div class="card" style="margin-bottom: 20px;">
+                <div class="card-header">
+                    <span class="card-title">Simulador de Intervención Económica</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 16px; align-items: end; margin-bottom: 16px;">
+                    <div>
+                        <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px;">Piscina</label>
+                        <select id="simPond" class="btn btn-secondary" style="width: 100%;"></select>
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px;">Acción</label>
+                        <select id="simAction" class="btn btn-secondary" style="width: 100%;">
+                            <option value="0">Sin acción</option>
+                            <option value="1">Aumentar flujo de agua</option>
+                            <option value="2">Reducir alimentación 20%</option>
+                            <option value="3">Aplicar tratamiento</option>
+                            <option value="4">Reducir densidad</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px;">Duración (días)</label>
+                        <input type="number" id="simDuration" value="30" min="1" max="120" class="btn btn-secondary" style="width: 100%;">
+                    </div>
+                    <button class="btn btn-primary" onclick="runSimulation()">▶️ Simular</button>
+                </div>
+            </div>
+
+            <div class="grid-2" style="margin-bottom: 20px;">
+                <div class="kpi-card green" id="simLossAvoided">
+                    <div class="kpi-label">Pérdidas Evitadas</div>
+                    <div class="kpi-value" id="simLossValue">$--</div>
+                </div>
+                <div class="kpi-card yellow" id="simActionCost">
+                    <div class="kpi-label">Costo de Acción</div>
+                    <div class="kpi-value" id="simCostValue">$--</div>
+                </div>
+            </div>
+            <div class="grid-2" style="margin-bottom: 20px;">
+                <div class="kpi-card" id="simNetBenefit">
+                    <div class="kpi-label">Beneficio Neto</div>
+                    <div class="kpi-value" id="simNetValue">$--</div>
+                </div>
+                <div class="kpi-card green" id="simROI">
+                    <div class="kpi-label">ROI de Intervención</div>
+                    <div class="kpi-value" id="simROIValue">--<span class="kpi-unit">%</span></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Comparación de Políticas</span>
+                </div>
+                <table class="econ-table" id="policyComparisonTable">
+                    <thead>
+                        <tr>
+                            <th>Política</th>
+                            <th>Costo ($)</th>
+                            <th>Pérdidas Evitadas ($)</th>
+                            <th>Beneficio Neto ($)</th>
+                            <th>ROI (%)</th>
+                            <th>Mortalidad Final (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="policyTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="chart-container" style="margin-top: 20px;">
+                <div class="card-header">
+                    <span class="card-title">Proyección Económica por Política</span>
+                </div>
+                <div id="chartEconProjection" style="height: 400px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+    // ============================================
+    // DATA LAYER — Mock data generation
+    // ============================================
+    const FARMS = [
+        { id: 'F01', name: 'Granja Costa Azul', ponds: ['P-001','P-002','P-003','P-004','P-005'] },
+        { id: 'F02', name: 'Granja Río Verde', ponds: ['P-006','P-007','P-008','P-009','P-010'] },
+        { id: 'F03', name: 'Granja Bahía Sur', ponds: ['P-011','P-012','P-013','P-014','P-015'] },
+    ];
+
+    const ALL_PONDS = FARMS.flatMap(f => f.ponds.map(p => ({ pondId: p, farmId: f.id, farmName: f.name })));
+
+    const ACTIONS = [
+        { id: 0, name: 'Sin acción', icon: '⏸️', desc: 'Mantener condiciones actuales', cost: 0, costUnit: '$/día' },
+        { id: 1, name: 'Aumentar flujo de agua', icon: '💧', desc: 'Mejora calidad de agua, reduce amonio y turbidez', cost: 50, costUnit: '$/día' },
+        { id: 2, name: 'Reducir alimentación 20%', icon: '🍽️', desc: 'Disminuye costo de alimento y exceso de nutrientes', cost: -30, costUnit: '$/día' },
+        { id: 3, name: 'Aplicar tratamiento', icon: '🧴', desc: 'Tratamiento químico para controlar patógenos', cost: 200, costUnit: '$/evento' },
+        { id: 4, name: 'Reducir densidad', icon: '🐟', desc: 'Translado de camarones a otra piscina', cost: 500, costUnit: '$/evento' },
+    ];
+
+    // Random with seed for reproducibility
+    let seed = 42;
+    function seededRandom() {
+        seed = (seed * 9301 + 49297) % 233280;
+        return seed / 233280;
+    }
+    function rand(min, max) { return min + Math.random() * (max - min); }
+
+    // Generate pond state
+    function generatePondState(pondId) {
+        const r = Math.random();
+        let baseRisk;
+        if (pondId === 'P-003' || pondId === 'P-008') baseRisk = rand(0.75, 0.92);
+        else if (pondId === 'P-001' || pondId === 'P-006' || pondId === 'P-012') baseRisk = rand(0.4, 0.65);
+        else baseRisk = rand(0.05, 0.3);
+
+        const risk = Math.min(1, baseRisk + rand(-0.05, 0.05));
+        const mortality = risk > 0.7 ? rand(8, 18) : risk > 0.4 ? rand(3, 8) : rand(0.5, 3);
+        const density = Math.floor(rand(60, 110));
+        const days = Math.floor(rand(20, 110));
+
+        const ph = risk > 0.6 ? rand(6.0, 6.8) : rand(7.2, 8.4);
+        const do = risk > 0.6 ? rand(2.0, 3.5) : rand(4.5, 7.5);
+        const salinity = rand(28, 38);
+        const turbidity = risk > 0.5 ? rand(60, 120) : rand(10, 45);
+        const temp = rand(26, 32);
+        const ammonia = risk > 0.6 ? rand(1.5, 4.5) : rand(0.05, 1.0);
+        const feed = density * 0.05 * rand(0.8, 1.2);
+        const growth = days * 0.2;
+
+        return { pondId, risk, mortality, density, days, sensors: { ph, do, salinity, turbidity, temp, ammonia, feed, growth } };
+    }
+
+    function getRiskLevel(prob) {
+        if (prob >= 0.75) return { label: 'crítico', class: 'risk-critico', text: 'Crítico' };
+        if (prob >= 0.5) return { label: 'alto', class: 'risk-alto', text: 'Alto' };
+        if (prob >= 0.25) return { label: 'medio', class: 'risk-medio', text: 'Medio' };
+        return { label: 'bajo', class: 'risk-bajo', text: 'Bajo' };
+    }
+
+    function getSensorStatus(sensor, value) {
+        const ranges = {
+            ph: { ok: [6.8, 8.5], warn: [6.0, 9.0] },
+            do: { ok: [4.0, 8.0], warn: [2.5, 10] },
+            salinity: { ok: [25, 40], warn: [15, 45] },
+            turbidity: { ok: [0, 50], warn: [50, 100] },
+            temp: { ok: [24, 33], warn: [20, 36] },
+            ammonia: { ok: [0, 1.0], warn: [1.0, 2.5] },
+        };
+        const r = ranges[sensor];
+        if (!r) return { class: 'sensor-ok', text: 'Normal' };
+        if (value >= r.ok[0] && value <= r.ok[1]) return { class: 'sensor-ok', text: 'Normal' };
+        if (value >= r.warn[0] && value <= r.warn[1]) return { class: 'sensor-warn', text: 'Alerta' };
+        return { class: 'sensor-alert', text: 'Crítico' };
+    }
+
+    // ============================================
+    // STATE
+    // ============================================
+    let currentPond = 'P-001';
+    let pondStates = {};
+
+    function initPondStates() {
+        ALL_PONDS.forEach(p => { pondStates[p.pondId] = generatePondState(p.pondId); });
+    }
+
+    // ============================================
+    // TAB SWITCHING
+    // ============================================
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        event.target.classList.add('active');
+
+        if (tab === 'risk') renderRiskMap();
+        if (tab === 'actions') renderActions();
+        if (tab === 'economic') { initEconomicTab(); }
+    }
+
+    // ============================================
+    // POND SELECTOR
+    // ============================================
+    function renderPondSelector() {
+        const container = document.getElementById('pondSelector');
+        container.innerHTML = ALL_PONDS.map(p => {
+            const state = pondStates[p.pondId];
+            const risk = getRiskLevel(state.risk);
+            return `<div class="pond-chip ${p.pondId === currentPond ? 'active' : ''}" onclick="selectPond('${p.pondId}')">${p.pondId} <span class="risk-badge ${risk.class}" style="font-size:10px; padding:2px 6px;">${risk.text}</span></div>`;
+        }).join('');
+    }
+
+    function selectPond(pondId) {
+        currentPond = pondId;
+        renderPondSelector();
+        updateMonitorTab();
+    }
+
+    // ============================================
+    // MONITOR TAB
+    // ============================================
+    function updateMonitorTab() {
+        const state = pondStates[currentPond];
+        if (!state) return;
+
+        // KPIs
+        const risk = getRiskLevel(state.risk);
+        document.getElementById('kpiRiskValue').innerHTML = (state.risk * 100).toFixed(1) + '<span class="kpi-unit">%</span>';
+        document.getElementById('kpiRisk').className = 'kpi-card ' + (risk.label === 'crítico' ? 'red' : risk.label === 'alto' ? 'yellow' : risk.label === 'medio' ? 'yellow' : 'green');
+        document.getElementById('kpiRiskTrend').innerHTML = state.risk > 0.5 ? '<span class="kpi-trend down">↑ ' + rand(2,8).toFixed(1) + '% vs ayer</span>' : '<span class="kpi-trend up">↓ ' + rand(1,5).toFixed(1) + '% vs ayer</span>';
+
+        document.getElementById('kpiMortalityValue').innerHTML = state.mortality.toFixed(1) + '<span class="kpi-unit">%</span>';
+        document.getElementById('kpiDensityValue').innerHTML = state.density + '<span class="kpi-unit"> ind/m²</span>';
+        document.getElementById('kpiDaysValue').innerHTML = state.days + '<span class="kpi-unit"> días</span>';
+
+        // Sensors
+        const s = state.sensors;
+        const sensors = [
+            { id: 'Ph', val: s.ph.toFixed(2), status: getSensorStatus('ph', s.ph) },
+            { id: 'Do', val: s.do.toFixed(1), status: getSensorStatus('do', s.do) },
+            { id: 'Sal', val: s.salinity.toFixed(0), status: getSensorStatus('salinity', s.salinity) },
+            { id: 'Turb', val: s.turbidity.toFixed(0), status: getSensorStatus('turbidity', s.turbidity) },
+            { id: 'Temp', val: s.temp.toFixed(1), status: getSensorStatus('temp', s.temp) },
+            { id: 'Nh3', val: s.ammonia.toFixed(2), status: getSensorStatus('ammonia', s.ammonia) },
+            { id: 'Feed', val: s.feed.toFixed(1), status: { class: 'sensor-ok', text: 'Normal' } },
+            { id: 'Growth', val: s.growth.toFixed(1), status: { class: 'sensor-ok', text: 'Normal' } },
+        ];
+        sensors.forEach(sen => {
+            document.getElementById('sensor' + sen.id).textContent = sen.val;
+            const statusEl = document.getElementById('sensor' + sen.id + 'Status');
+            statusEl.className = 'sensor-status ' + sen.status.class;
+            statusEl.textContent = sen.status.text;
+        });
+
+        // Alert banner
+        const banner = document.getElementById('alertBanner');
+        if (state.risk > 0.7) {
+            banner.style.display = 'flex';
+            document.getElementById('alertTitle').textContent = 'Alerta de Riesgo ' + risk.text;
+            document.getElementById('alertDesc').textContent = 'Piscina ' + currentPond + ' presenta probabilidad de brote del ' + (state.risk * 100).toFixed(0) + '%. Se recomienda acción inmediata.';
+        } else {
+            banner.style.display = 'none';
+        }
+
+        // Charts
+        renderSensorTimeChart(s);
+        renderOutbreakProbChart(state.risk);
+    }
+
+    function renderSensorTimeChart(sensors) {
+        const hours = [];
+        const phData = [], doData = [], tempData = [], ammoniaData = [];
+        for (let h = 23; h >= 0; h--) {
+            hours.push(h + ':00');
+            phData.push(+(sensors.ph + rand(-0.3, 0.3)).toFixed(2));
+            doData.push(+(sensors.do + rand(-0.8, 0.8)).toFixed(1));
+            tempData.push(+(sensors.temp + rand(-1.0, 1.0)).toFixed(1));
+            ammoniaData.push(+(sensors.ammonia + rand(-0.2, 0.3)).toFixed(2));
+        }
+
+        const traces = [
+            { x: hours, y: phData, name: 'pH', yaxis: 'y1', line: { color: '#42a5f5' } },
+            { x: hours, y: doData, name: 'O₂ (mg/L)', yaxis: 'y2', line: { color: '#66bb6a' } },
+            { x: hours, y: tempData, name: 'Temp (°C)', yaxis: 'y3', line: { color: '#ffa726' } },
+            { x: hours, y: ammoniaData, name: 'NH₃ (mg/L)', yaxis: 'y4', line: { color: '#ef5350' } },
+        ];
+
+        Plotly.react('chartSensorTime', traces, {
+            paper_bgcolor: 'transparent',
+            plot_bgcolor: 'transparent',
+            font: { color: '#90caf9', size: 11 },
+            margin: { t: 10, b: 40, l: 50, r: 50 },
+            xaxis: { gridcolor: '#1e4976', title: 'Hora' },
+            yaxis: { gridcolor: '#1e4976', title: 'pH', side: 'left' },
+            yaxis2: { gridcolor: '#1e4976', title: 'O₂', side: 'right', overlaying: 'y' },
+            yaxis3: { title: '°C', side: 'right', overlaying: 'y', anchor: 'free', autoshift: true },
+            yaxis4: { title: 'NH₃', side: 'right', overlaying: 'y', anchor: 'free', autoshift: true, shift: 40 },
+            legend: { orientation: 'h', y: -0.25 },
+            showlegend: true,
+        }, { responsive: true });
+    }
+
+    function renderOutbreakProbChart(currentRisk) {
+        const days = [];
+        const probs = [];
+        for (let d = 6; d >= 0; d--) {
+            days.push('D-' + d);
+            probs.push(+(Math.max(0.02, Math.min(0.98, currentRisk + rand(-0.15, 0.05) - d * 0.02))).toFixed(3));
+        }
+        days.push('Hoy');
+        probs.push(currentRisk);
+
+        const trace = {
+            x: days, y: probs,
+            type: 'scatter', mode: 'lines+markers',
+            line: { color: '#ef5350', width: 3 },
+            fill: 'tozeroy', fillcolor: 'rgba(239,83,80,0.1)',
+            marker: { size: 8 },
+        };
+
+        const threshold = {
+            x: days, y: Array(days.length).fill(0.5),
+            type: 'scatter', mode: 'lines',
+            line: { color: '#ffa726', dash: 'dash', width: 2 },
+            name: 'Umbral (50%)',
+        };
+
+        Plotly.react('chartOutbreakProb', [trace, threshold], {
+            paper_bgcolor: 'transparent',
+            plot_bgcolor: 'transparent',
+            font: { color: '#90caf9', size: 11 },
+            margin: { t: 10, b: 40, l: 50, r: 30 },
+            xaxis: { gridcolor: '#1e4976' },
+            yaxis: { gridcolor: '#1e4976', title: 'Probabilidad', range: [0, 1] },
+            legend: { orientation: 'h', y: -0.2 },
+        }, { responsive: true });
+    }
+
+    function dismissAlert() {
+        document.getElementById('alertBanner').style.display = 'none';
+    }
+
+    // ============================================
+    // RISK MAP TAB
+    // ============================================
+    function renderRiskMap() {
+        const container = document.getElementById('farmRiskMap');
+        container.innerHTML = FARMS.map(farm => {
+            const pondCards = farm.ponds.map(pid => {
+                const state = pondStates[pid];
+                const risk = getRiskLevel(state.risk);
+                return `<div class="farm-pond risk-${risk.label}" onclick="selectPond('${pid}'); switchTabToMonitor();">
+                    <div style="font-size: 14px; font-weight: 600; margin-bottom: 6px;">${pid}</div>
+                    <div style="font-size: 28px; font-weight: 700; color: var(--accent-${risk.label === 'bajo' ? 'green' : risk.label === 'medio' ? 'yellow' : risk.label === 'alto' ? 'orange' : 'red'});">
+                        ${(state.risk * 100).toFixed(0)}%
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Riesgo ${risk.text}</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Mortalidad: ${state.mortality.toFixed(1)}%</div>
+                </div>`;
+            }).join('');
+            return `<div style="grid-column: 1 / -1; font-size: 16px; font-weight: 600; margin-top: 12px; margin-bottom: 4px; color: var(--text-secondary);">${farm.name} (${farm.id})</div>${pondCards}`;
+        }).join('');
+
+        // Risk distribution chart
+        const farmNames = FARMS.map(f => f.name);
+        const lowCounts = FARMS.map(f => f.ponds.filter(p => pondStates[p].risk < 0.25).length);
+        const medCounts = FARMS.map(f => f.ponds.filter(p => pondStates[p].risk >= 0.25 && pondStates[p].risk < 0.5).length);
+        const highCounts = FARMS.map(f => f.ponds.filter(p => pondStates[p].risk >= 0.5 && pondStates[p].risk < 0.75).length);
+        const critCounts = FARMS.map(f => f.ponds.filter(p => pondStates[p].risk >= 0.75).length);
+
+        Plotly.react('chartRiskDist', [
+            { x: farmNames, y: lowCounts, name: 'Bajo', type: 'bar', marker: { color: '#66bb6a' } },
+            { x: farmNames, y: medCounts, name: 'Medio', type: 'bar', marker: { color: '#ffa726' } },
+            { x: farmNames, y: highCounts, name: 'Alto', type: 'bar', marker: { color: '#ff7043' } },
+            { x: farmNames, y: critCounts, name: 'Crítico', type: 'bar', marker: { color: '#ef5350' } },
+        ], {
+            paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+            font: { color: '#90caf9', size: 11 },
+            barmode: 'stack',
+            margin: { t: 10, b: 40, l: 50, r: 30 },
+            xaxis: { gridcolor: '#1e4976' },
+            yaxis: { gridcolor: '#1e4976', title: 'N° de Piscinas', dtick: 1 },
+            legend: { orientation: 'h', y: -0.2 },
+        }, { responsive: true });
+    }
+
+    function refreshRiskMap() {
+        // Re-generate pond states with new random
+        Object.keys(pondStates).forEach(pid => { pondStates[pid] = generatePondState(pid); });
+        renderRiskMap();
+        renderPondSelector();
+        updateMonitorTab();
+    }
+
+    function switchTabToMonitor() {
+        document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-monitor').classList.add('active');
+        document.querySelectorAll('.nav-tab')[0].classList.add('active');
+        updateMonitorTab();
+    }
+
+    // ============================================
+    // ACTIONS TAB
+    // ============================================
+    function renderActions() {
+        const state = pondStates[currentPond];
+        if (!state) return;
+
+        // Determine recommended action
+        let recommendedId = 0;
+        let confidence = 0;
+        let reasoning = '';
+
+        if (state.risk > 0.7 && state.sensors.ammonia > 2.0) {
+            recommendedId = 3; confidence = 0.92;
+            reasoning = 'Probabilidad de brote crítica con niveles altos de amonio. El tratamiento químico reduce directamente la carga patogénica.';
+        } else if (state.risk > 0.7) {
+            recommendedId = 4; confidence = 0.85;
+            reasoning = 'Riesgo crítico sin causa única identificable. Reducir densidad disminuye el estrés y la transmisión.';
+        } else if (state.risk > 0.5 && state.sensors.turbidity > 50) {
+            recommendedId = 1; confidence = 0.78;
+            reasoning = 'Turbidez elevada con riesgo alto. El intercambio de agua mejora la calidad rápidamente.';
+        } else if (state.risk > 0.5 && state.sensors.ammonia > 1.5) {
+            recommendedId = 1; confidence = 0.75;
+            reasoning = 'Amonio elevado con riesgo alto. Se recomienda aumentar el flujo de agua para diluir.';
+        } else if (state.risk > 0.3 && state.density > 80) {
+            recommendedId = 4; confidence = 0.62;
+            reasoning = 'Densidad alta con riesgo moderado. Reducir densidad previene estrés futuro.';
+        } else if (state.risk > 0.3 && state.sensors.feed > 4) {
+            recommendedId = 2; confidence = 0.58;
+            reasoning = 'Alimentación elevada con riesgo moderado. Reducir 20% disminuye exceso de nutrientes.';
+        } else {
+            recommendedId = 0; confidence = 0.45;
+            reasoning = 'Condiciones estables. Mantener monitoreo continuo y protocolos de bioseguridad estándar.';
+        }
+
+        // Confidence badge
+        const confBadge = document.getElementById('recommendationConfidence');
+        const confLevel = confidence > 0.8 ? { class: 'risk-bajo', text: 'Alta' } : confidence > 0.6 ? { class: 'risk-medio', text: 'Media' } : { class: 'risk-alto', text: 'Baja' };
+        confBadge.className = 'risk-badge ' + confLevel.class;
+        confBadge.textContent = 'Confianza: ' + confLevel.text + ' (' + (confidence * 100).toFixed(0) + '%)';
+
+        // Action list
+        const actionList = document.getElementById('actionList');
+        actionList.innerHTML = ACTIONS.map(a => {
+            const isRec = a.id === recommendedId;
+            return `<div class="action-item ${isRec ? 'recommended' : ''}" onclick="showActionDetail(${a.id}, ${recommendedId}, '${reasoning.replace(/'/g, "\\'")}', ${confidence})">
+                <span class="action-icon">${a.icon}</span>
+                <div class="action-info">
+                    <div class="action-name">${a.name}${isRec ? ' ⭐' : ''}</div>
+                    <div class="action-desc">${a.desc}</div>
+                </div>
+                <div class="action-cost">$${a.cost}${a.costUnit}</div>
+            </div>`;
+        }).join('');
+
+        // Auto-show detail for recommended
+        showActionDetail(recommendedId, recommendedId, reasoning, confidence);
+
+        // Action history chart
+        renderActionHistoryChart();
+    }
+
+    function showActionDetail(actionId, recommendedId, reasoning, confidence) {
+        const action = ACTIONS[actionId];
+        const state = pondStates[currentPond];
+        const isRec = actionId === recommendedId;
+
+        // Economic estimate
+        const duration = 7;
+        const actionCost = action.cost > 0 ? action.cost * (action.costUnit.includes('día') ? duration : 1) : Math.abs(action.cost) * duration;
+        const mortalityReduction = isRec ? rand(3, 12) : rand(0, 4);
+        const lossesAvoided = mortalityReduction * state.density * 1000 * 0.012; // rough estimate
+        const netBenefit = lossesAvoided - actionCost;
+        const roi = actionCost > 0 ? (netBenefit / actionCost * 100) : 0;
+
+        document.getElementById('actionDetail').innerHTML = `
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="font-size: 48px;">${action.icon}</div>
+                <div style="font-size: 18px; font-weight: 600; margin-top: 8px;">${action.name}</div>
+                ${isRec ? '<div class="risk-badge risk-bajo" style="margin-top: 8px;">⭐ Acción Recomendada</div>' : ''}
+            </div>
+            <div style="background: var(--bg-secondary); border-radius: 8px; padding: 14px; margin-bottom: 12px;">
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">JUSTIFICACIÓN</div>
+                <div style="font-size: 13px;">${reasoning}</div>
+            </div>
+            <div class="grid-2" style="gap: 10px;">
+                <div style="background: var(--bg-secondary); border-radius: 8px; padding: 12px; text-align: center;">
+                    <div style="font-size: 11px; color: var(--text-muted);">Costo Estimado (7 días)</div>
+                    <div style="font-size: 20px; font-weight: 700; color: var(--accent-yellow);">$${actionCost.toFixed(0)}</div>
+                </div>
+                <div style="background: var(--bg-secondary); border-radius: 8px; padding: 12px; text-align: center;">
+                    <div style="font-size: 11px; color: var(--text-muted);">Pérdidas Evitadas</div>
+                    <div style="font-size: 20px; font-weight: 700; color: var(--accent-green);">$${lossesAvoided.toFixed(0)}</div>
+                </div>
+                <div style="background: var(--bg-secondary); border-radius: 8px; padding: 12px; text-align: center;">
+                    <div style="font-size: 11px; color: var(--text-muted);">Beneficio Neto</div>
+                    <div style="font-size: 20px; font-weight: 700; color: ${netBenefit >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'};">$${netBenefit.toFixed(0)}</div>
+                </div>
+                <div style="background: var(--bg-secondary); border-radius: 8px; padding: 12px; text-align: center;">
+                    <div style="font-size: 11px; color: var(--text-muted);">ROI</div>
+                    <div style="font-size: 20px; font-weight: 700; color: ${roi >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'};">${roi.toFixed(0)}%</div>
+                </div>
+            </div>
+            <div style="margin-top: 14px; font-size: 12px; color: var(--text-muted);">
+                <strong>Piscina:</strong> ${currentPond} | <strong>Prob. brote actual:</strong> ${(state.risk * 100).toFixed(1)}% | <strong>Confianza:</strong> ${(confidence * 100).toFixed(0)}%
+            </div>
+        `;
+    }
+
+    function renderActionHistoryChart() {
+        const days = [];
+        const actions = [];
+        const actionNames = ['Sin acción', 'Flujo agua', 'Alimentación', 'Tratamiento', 'Reducir densidad'];
+        for (let d = 29; d >= 0; d--) {
+            days.push('D-' + d);
+            actions.push(Math.floor(rand(0, 5)));
+        }
+
+        Plotly.react('chartActionHistory', [{
+            x: days,
+            y: actions,
+            type: 'scatter',
+            mode: 'markers',
+            marker: { size: 10, color: actions.map(a => ['#42a5f5', '#26c6da', '#66bb6a', '#ffa726', '#ef5350'][a]) },
+            text: actions.map(a => actionNames[a]),
+        }], {
+            paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+            font: { color: '#90caf9', size: 11 },
+            margin: { t: 10, b: 40, l: 50, r: 30 },
+            xaxis: { gridcolor: '#1e4976' },
+            yaxis: { gridcolor: '#1e4976', title: 'Acción', tickvals: [0,1,2,3,4], ticktext: actionNames, dtick: 1 },
+        }, { responsive: true });
+    }
+
+    // ============================================
+    // ECONOMIC SIMULATOR TAB
+    // ============================================
+    function initEconomicTab() {
+        const select = document.getElementById('simPond');
+        select.innerHTML = ALL_PONDS.map(p => `<option value="${p.pondId}" ${p.pondId === currentPond ? 'selected' : ''}>${p.pondId} — ${p.farmName}</option>`).join('');
+        renderPolicyComparison();
+        renderEconProjection();
+    }
+
+    function runSimulation() {
+        const pondId = document.getElementById('simPond').value;
+        const actionId = parseInt(document.getElementById('simAction').value);
+        const duration = parseInt(document.getElementById('simDuration').value);
+        const state = pondStates[pondId];
+        const action = ACTIONS[actionId];
+
+        const actionCost = action.cost > 0 ? action.cost * (action.costUnit.includes('día') ? duration : 1) : Math.abs(action.cost) * duration;
+        const baseMortality = state.mortality;
+        const mortalityReduction = actionId === 3 ? rand(5, 15) : actionId === 4 ? rand(4, 10) : actionId === 1 ? rand(2, 6) : actionId === 2 ? rand(1, 3) : 0;
+        const newMortality = Math.max(0.5, baseMortality - mortalityReduction);
+        const lossesAvoided = mortalityReduction * state.density * 1000 * 0.012 * (duration / 30);
+        const netBenefit = lossesAvoided - actionCost;
+        const roi = actionCost > 0 ? (netBenefit / actionCost * 100) : 0;
+
+        document.getElementById('simLossValue').textContent = '$' + lossesAvoided.toLocaleString('es', { maximumFractionDigits: 0 });
+        document.getElementById('simCostValue').textContent = '$' + actionCost.toLocaleString('es', { maximumFractionDigits: 0 });
+        document.getElementById('simNetValue').textContent = '$' + netBenefit.toLocaleString('es', { maximumFractionDigits: 0 });
+        document.getElementById('simNetValue').style.color = netBenefit >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+        document.getElementById('simROIValue').innerHTML = roi.toFixed(1) + '<span class="kpi-unit">%</span>';
+        document.getElementById('simROIValue').style.color = roi >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+
+        renderPolicyComparison();
+        renderEconProjection();
+    }
+
+    function renderPolicyComparison() {
+        const pondId = document.getElementById('simPond')?.value || currentPond;
+        const state = pondStates[pondId];
+        const duration = parseInt(document.getElementById('simDuration')?.value || 30);
+
+        const results = ACTIONS.map(a => {
+            const cost = a.cost > 0 ? a.cost * (a.costUnit.includes('día') ? duration : 1) : Math.abs(a.cost) * duration;
+            const mortRed = a.id === 3 ? rand(5,15) : a.id === 4 ? rand(4,10) : a.id === 1 ? rand(2,6) : a.id === 2 ? rand(1,3) : 0;
+            const finalMort = Math.max(0.5, state.mortality - mortRed);
+            const lossesAvoided = mortRed * state.density * 1000 * 0.012 * (duration / 30);
+            const net = lossesAvoided - cost;
+            const roi = cost > 0 ? (net / cost * 100) : 0;
+            return { name: a.name, cost, lossesAvoided, net, roi, finalMort };
+        });
+
+        const tbody = document.getElementById('policyTableBody');
+        tbody.innerHTML = results.map(r => `<tr>
+            <td>${r.name}</td>
+            <td>$${r.cost.toLocaleString('es', { maximumFractionDigits: 0 })}</td>
+            <td>$${r.lossesAvoided.toLocaleString('es', { maximumFractionDigits: 0 })}</td>
+            <td class="${r.net >= 0 ? 'profit-positive' : 'profit-negative'}">$${r.net.toLocaleString('es', { maximumFractionDigits: 0 })}</td>
+            <td class="${r.roi >= 0 ? 'profit-positive' : 'profit-negative'}">${r.roi.toFixed(1)}%</td>
+            <td>${r.finalMort.toFixed(1)}%</td>
+        </tr>`).join('');
+    }
+
+    function renderEconProjection() {
+        const days = [];
+        for (let d = 0; d <= 120; d += 10) days.push('D' + d);
+
+        const traces = ACTIONS.map((a, i) => {
+            const data = days.map((_, idx) => {
+                const baseProfit = 50000 - idx * 300;
+                const actionCost = a.cost > 0 ? a.cost * (a.costUnit.includes('día') ? idx * 10 : 1) : Math.abs(a.cost) * idx * 10;
+                const savings = (i === 3 ? 8000 : i === 4 ? 6000 : i === 1 ? 3000 : i === 2 ? 1500 : 0) * idx;
+                return baseProfit - actionCost + savings;
+            });
+            return { x: days, y: data, name: a.name, type: 'scatter', mode: 'lines', line: { width: 2 } };
+        });
+
+        Plotly.react('chartEconProjection', traces, {
+            paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+            font: { color: '#90caf9', size: 11 },
+            margin: { t: 10, b: 40, l: 60, r: 30 },
+            xaxis: { gridcolor: '#1e4976', title: 'Días de cultivo' },
+            yaxis: { gridcolor: '#1e4976', title: 'Ganancia Neta ($)' },
+            legend: { orientation: 'h', y: -0.2 },
+        }, { responsive: true });
+    }
+
+    // ============================================
+    // INIT
+    // ============================================
+    initPondStates();
+    renderPondSelector();
+    updateMonitorTab();
+    </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+# Web framework
+fastapi
+uvicorn[standard]
+pydantic>=2
+python-multipart
+
+# Deep Learning
+torch
+torchvision
+
+# Reinforcement Learning
+stable-baselines3
+gymnasium
+
+# Data processing
+pandas
+numpy
+scikit-learn
+pyarrow
+
+# Visualization
+matplotlib
+plotly
+
+# Testing
+pytest

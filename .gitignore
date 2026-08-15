@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+.venv/
+venv/
+env/
+
+# Data — datasets sintéticos grandes (regenerables con scripts)
+data/raw/sensores_crudos.csv
+data/raw/clima_crudo.csv
+data/raw/operaciones_crudas.csv
+data/raw/brotes_crudos.csv
+data/raw/operaciones_reales.csv
+data/raw/sensores_reales_lit.csv
+data/raw/*.parquet
+
+# Datos reales anexados al repositorio (subconjunto pequeño)
+!data/raw/shrimp_production_sample.json
+!data/raw/produccion_real_camarón.csv
+
+# Parquet sintéticos (regenerables con scripts/run_etl.py)
+data/processed/sensores.parquet
+data/processed/brotes_etiquetados.parquet
+data/processed/operaciones.parquet
+data/processed/merged_features.parquet
+
+# Parquet con datos reales integrados (se suben)
+!data/processed/sensores_reales.parquet
+!data/processed/operaciones_reales.parquet
+!data/processed/merged_features_real.parquet
+
+# Models — artefactos de entrenamiento (los .pkl entrenados SÍ se suben)
+models/*.pth
+models/*.zip
+models/*.pt
+!models/.gitkeep
+
+# Deploy artifacts
+*.zip
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Env
+.env
+
+# Tests
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Docker
+docker-compose.override.yml
