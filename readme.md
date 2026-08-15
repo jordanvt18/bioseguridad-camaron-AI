@@ -180,6 +180,48 @@ Copiar `.env.example` a `.env` y ajustar valores:
 | `MODEL_PATH` | Ruta a modelos entrenados | `./models` |
 | `DATA_PATH` | Ruta a datos | `./data` |
 | `LOG_LEVEL` | Nivel de logging | `INFO` |
+| `MQTT_ENABLED` | Activar puente MQTT (`1`/`0`) | `0` |
+| `MQTT_BROKER` | Host del broker MQTT | `localhost` |
+| `MQTT_PORT` | Puerto del broker MQTT | `1883` |
+| `MQTT_USERNAME` / `MQTT_PASSWORD` | Credenciales del broker | — |
+
+## Streaming de datos en tiempo real
+
+El sistema soporta datos reales por streaming con esta arquitectura:
+
+```
+[Sensores IoT (ESP32/Arduino)] --MQTT--> [Broker Mosquitto/EMQX]
+                                              |
+                                        paho-mqtt
+                                              v
+                              [MqttBridge: bioseguridad/sensors/{pond_id}]
+                                              |
+                                        WebSocket
+                                              v
+                              [API FastAPI] <--> [Dashboard operativo]
+```
+
+### Endpoints de streaming
+
+| Transporte | Ruta | Descripción |
+|------------|------|-------------|
+| WebSocket | `/ws/pond/{pond_id}?interval=5&species=vannamei` | Lecturas en vivo (recomendado, bidireccional) |
+| SSE | `/stream/pond/{pond_id}?interval=5&species=vannamei` | Alternativa unidireccional (EventSource) |
+
+Cada mensaje (`type: "reading"`) incluye: `timestamp`, `pond_id`, `species`, `sensors` (ph, dissolved_oxygen, salinity, turbidity, temperature, ammonia) y `outbreak_probability` (0–1).
+
+### Sensores reales por MQTT
+
+1. Instala un broker (Mosquitto) y configura `.env` con `MQTT_ENABLED=1`.
+2. Los sensores publican JSON en `bioseguridad/sensors/{pond_id}`:
+
+   ```json
+   {"ph": 7.8, "dissolved_oxygen": 5.2, "salinity": 30.1, "turbidity": 25.0, "temperature": 29.1, "ammonia": 0.35}
+   ```
+
+3. El dashboard se conecta con el botón **🔴 Streaming en vivo** (pestaña Monitoreo): `ws://localhost:8000/ws/pond/pond-001`. Incluye reconexión automática con backoff y actualiza KPIs, sensores, riesgo y gráficos en tiempo real.
+
+> **Nota:** GitHub Pages sirve solo archivos estáticos (no WebSockets). El streaming requiere la API corriendo — localmente con `uvicorn src.api.main:app --host 0.0.0.0 --port 8000`, o desplegada en un servicio con soporte WebSocket (Render/Fly/Railway).
 
 ## Testing
 

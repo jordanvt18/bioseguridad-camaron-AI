@@ -14,10 +14,12 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 
 from .mock_data import MockDataManager
+from .mqtt_bridge import MqttBridge, bridge_from_env
 from .schemas import (
     FarmRiskMap,
     HealthResponse,
@@ -29,6 +31,7 @@ from .schemas import (
     SimulationRequest,
     SimulationResult,
 )
+from .stream import SensorStreamer, sse_event_stream
 
 # ---------------------------------------------------------------------------
 # Constantes
@@ -48,16 +51,24 @@ API_DESCRIPTION = (
 # ---------------------------------------------------------------------------
 
 manager: Optional[MockDataManager] = None
+mqtt_bridge: Optional[MqttBridge] = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Inicializa y limpia recursos del ciclo de vida de la aplicación."""
-    global manager
+    global manager, mqtt_bridge
     manager = MockDataManager()
     app.state.manager = manager
+    mqtt_bridge = bridge_from_env()
+    if mqtt_bridge:
+        await mqtt_bridge.start()
+        app.state.mqtt_bridge = mqtt_bridge
     yield
+    if mqtt_bridge:
+        await mqtt_bridge.stop()
     manager = None
+    mqtt_bridge = None
 
 
 # ---------------------------------------------------------------------------
@@ -293,4 +304,88 @@ async def get_farm_risk_map(farm_id: str) -> FarmRiskMap:
         farm_name=mgr.get_farm_name(farm_id) or farm_id,
         ponds=pond_summaries,
         overall_risk=overall,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Streaming en tiempo real
+# ---------------------------------------------------------------------------
+
+
+@app.websocket("/ws/pond/{pond_id}")
+async def ws_pond_stream(websocket: WebSocket, pond_id: str) -> None:
+    """
+    WebSocket de lectura en vivo de una piscina.
+
+    Envía un mensaje inicial con el estado actual y luego una lectura
+    cada `interval` segundos (query param, por defecto 5 s):
+
+        {"type": "reading", "timestamp": ..., "pond_id": ...,
+         "species": ..., "sensors": {...}, "outbreak_probability": ...}
+
+    Si hay un puente MQTT activo, las lecturas reales de sensores IoT
+    tienen prioridad sobre el streamer simulado.
+    """
+    mgr = _get_manager()
+    if not mgr.pond_exists(pond_id):
+        await websocket.close(code=4404)
+        return
+
+    await websocket.accept()
+    interval = float(websocket.query_params.get("interval", "5"))
+    species = websocket.query_params.get("species", "vannamei")
+
+    # Mensaje inicial: estado actual
+    status = mgr.get_pond_status(pond_id)
+    if status is not None:
+        await websocket.send_json({
+            "type": "status",
+            "pond_id": pond_id,
+            "sensors": status.sensors.model_dump(mode="json") if hasattr(status.sensors, "model_dump") else str(status.sensors),
+            "alert_level": str(status.alert_level.value) if hasattr(status.alert_level, "value") else str(status.alert_level),
+        })
+
+    streamer = SensorStreamer(mgr, pond_id, interval=interval, species=species)
+    try:
+        if mqtt_bridge is not None and mqtt_bridge.running:
+            # Modo MQTT: reenviar lecturas reales
+            async for message in mqtt_bridge.readings():
+                if message.get("pond_id") == pond_id:
+                    await websocket.send_json(message)
+        else:
+            # Modo simulado: generador interno
+            async for message in streamer.readings():
+                await websocket.send_json(message)
+    except WebSocketDisconnect:
+        return
+    except Exception as exc:  # pragma: no cover
+        logger = __import__("logging").getLogger("bioseguridad.stream")
+        logger.warning("Stream de %s terminado: %s", pond_id, exc)
+
+
+@app.get("/stream/pond/{pond_id}", tags=["Streaming"])
+async def sse_pond_stream(
+    pond_id: str,
+    interval: float = Query(5.0, ge=1.0, le=60.0, description="Segundos entre lecturas"),
+    species: str = Query("vannamei", description="Especie para umbrales"),
+) -> StreamingResponse:
+    """
+    Stream de lecturas por Server-Sent Events (SSE).
+
+    Alternativa unidireccional al WebSocket, útil para clientes que no
+    necesitan enviar comandos. Consumible con EventSource del navegador.
+    """
+    mgr = _get_manager()
+    if not mgr.pond_exists(pond_id):
+        raise HTTPException(status_code=404, detail=f"Estanque '{pond_id}' no encontrado.")
+
+    streamer = SensorStreamer(mgr, pond_id, interval=interval, species=species)
+    return StreamingResponse(
+        sse_event_stream(streamer),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
     )

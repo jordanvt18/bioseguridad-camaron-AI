@@ -3,6 +3,10 @@ fastapi
 uvicorn[standard]
 pydantic>=2
 python-multipart
+websockets
+
+# Streaming / IoT
+paho-mqtt
 
 # Deep Learning
 torch
@@ -24,3 +28,4 @@ plotly
 
 # Testing
 pytest
+httpx
