@@ -3,1210 +3,1687 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador de Bioseguridad Inteligente para Camarón</title>
+    <title>Bioseguridad Camarón AI — Dashboard Operativo</title>
+    <meta name="description" content="Plataforma de bioseguridad acuícola: predicción de brotes, importación de datos reales de piscinas y recomendaciones de intervención.">
     <script src="plotly.min.js"></script>
     <script>if (typeof Plotly === 'undefined') { document.write('<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"><\/script>'); }</script>
     <style>
         :root {
-            --bg-primary: #0a1929;
-            --bg-secondary: #132f4c;
-            --bg-card: #1a3a5c;
-            --bg-card-hover: #234a73;
-            --text-primary: #e3f2fd;
-            --text-secondary: #90caf9;
-            --text-muted: #5c7a9c;
-            --accent-blue: #42a5f5;
-            --accent-green: #66bb6a;
-            --accent-yellow: #ffa726;
-            --accent-orange: #ff7043;
-            --accent-red: #ef5350;
-            --accent-cyan: #26c6da;
-            --accent-purple: #ab47bc;
-            --border-color: #1e4976;
-            --shadow: 0 4px 20px rgba(0,0,0,0.3);
+            --bg: #f1f5f9;
+            --bg-deep: #0b1e33;
+            --panel: #ffffff;
+            --panel-soft: #f8fafc;
+            --ink: #0f172a;
+            --ink-soft: #475569;
+            --ink-muted: #94a3b8;
+            --line: #e2e8f0;
+            --blue: #0ea5e9;
+            --blue-deep: #0369a1;
+            --teal: #14b8a6;
+            --green: #22c55e;
+            --green-soft: #dcfce7;
+            --amber: #f59e0b;
+            --amber-soft: #fef3c7;
+            --orange: #f97316;
+            --red: #ef4444;
+            --red-soft: #fee2e2;
+            --violet: #8b5cf6;
+            --shadow-sm: 0 1px 3px rgba(15,23,42,.08);
+            --shadow: 0 4px 16px rgba(15,23,42,.10);
+            --shadow-lg: 0 12px 32px rgba(15,23,42,.16);
+            --radius: 14px;
+            --radius-sm: 10px;
         }
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
+        html { scroll-behavior: smooth; }
         body {
-            font-family: 'Segoe UI', Tahoma, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
+            font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
             min-height: 100vh;
-            overflow-x: hidden;
         }
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-        /* Header */
+        /* ===== Header ===== */
         .header {
-            background: linear-gradient(135deg, #0d47a1, #1565c0);
-            padding: 18px 30px;
+            background: linear-gradient(120deg, #0b1e33 0%, #0f2e4f 55%, #0b3d5c 100%);
+            color: #fff;
+            padding: 16px 28px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: var(--shadow);
+            gap: 20px;
+            flex-wrap: wrap;
+            box-shadow: var(--shadow-lg);
             position: sticky;
             top: 0;
             z-index: 100;
         }
-        .header-left { display: flex; align-items: center; gap: 16px; }
-        .header-logo {
-            font-size: 32px;
+        .header-brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+        .brand-mark {
+            width: 46px; height: 46px; flex: 0 0 46px;
+            background: linear-gradient(135deg, var(--teal), var(--blue));
+            border-radius: 12px;
+            display: grid; place-items: center;
+            font-size: 24px;
+            box-shadow: 0 4px 14px rgba(20,184,166,.4);
         }
-        .header h1 {
-            font-size: 20px;
-            font-weight: 600;
-            color: #fff;
+        .brand-title { font-size: 18px; font-weight: 700; letter-spacing: .2px; white-space: nowrap; }
+        .brand-sub { font-size: 12px; color: #7dd3fc; font-weight: 400; margin-top: 2px; }
+        .header-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .pill {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 7px 14px; border-radius: 999px;
+            font-size: 12.5px; font-weight: 600;
+            background: rgba(255,255,255,.1);
+            border: 1px solid rgba(255,255,255,.18);
+            color: #e2e8f0;
         }
-        .header h1 small {
-            display: block;
-            font-size: 12px;
-            color: var(--text-secondary);
-            font-weight: 400;
+        .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+        .pill .dot.warn { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+        .pill .dot.real { background: var(--violet); box-shadow: 0 0 8px var(--violet); }
+        .species-select {
+            padding: 8px 14px; border-radius: 10px;
+            border: 1px solid rgba(255,255,255,.25);
+            background: rgba(255,255,255,.12);
+            color: #fff; font-size: 13.5px; font-weight: 600;
+            cursor: pointer; outline: none;
         }
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        .header-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--accent-green);
-            box-shadow: 0 0 8px var(--accent-green);
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
+        .species-select option { color: var(--ink); background: #fff; }
 
-        /* Navigation */
-        .nav-tabs {
-            display: flex;
-            background: var(--bg-secondary);
-            padding: 0 30px;
-            gap: 4px;
-            border-bottom: 2px solid var(--border-color);
+        /* ===== Nav ===== */
+        .nav {
+            display: flex; gap: 4px;
+            background: #fff;
+            padding: 0 28px;
+            border-bottom: 1px solid var(--line);
+            overflow-x: auto;
+            position: sticky; top: 78px; z-index: 90;
+            box-shadow: var(--shadow-sm);
         }
         .nav-tab {
-            padding: 14px 24px;
-            cursor: pointer;
-            color: var(--text-muted);
-            font-size: 14px;
-            font-weight: 500;
+            padding: 14px 18px; cursor: pointer;
+            font-size: 13.5px; font-weight: 600;
+            color: var(--ink-muted);
             border-bottom: 3px solid transparent;
-            transition: all 0.3s;
+            transition: color .2s, border-color .2s, background .2s;
+            white-space: nowrap; user-select: none;
         }
-        .nav-tab:hover { color: var(--text-secondary); background: rgba(255,255,255,0.03); }
-        .nav-tab.active {
-            color: var(--accent-blue);
-            border-bottom-color: var(--accent-blue);
-        }
+        .nav-tab:hover { color: var(--blue-deep); background: #f0f9ff; }
+        .nav-tab.active { color: var(--blue-deep); border-bottom-color: var(--blue); background: #f0f9ff; }
 
-        /* Main content */
-        .main-content {
-            padding: 24px 30px;
-            max-width: 1600px;
-            margin: 0 auto;
-        }
-        .tab-panel { display: none; }
+        /* ===== Main ===== */
+        .main { padding: 24px 28px 60px; max-width: 1500px; margin: 0 auto; }
+        .tab-panel { display: none; animation: fadeIn .25s ease; }
         .tab-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-        /* Grid layouts */
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 
-        /* Cards */
         .card {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-color);
-        }
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
+            background: var(--panel); border: 1px solid var(--line);
+            border-radius: var(--radius); padding: 18px;
+            box-shadow: var(--shadow-sm);
         }
         .card-title {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-size: 13px; font-weight: 700; letter-spacing: .6px;
+            text-transform: uppercase; color: var(--ink-muted);
+            margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;
         }
-        .card-body { font-size: 14px; }
+        .chart-box { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow-sm); }
 
-        /* KPI Cards */
-        .kpi-card {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 20px;
-            border-left: 4px solid var(--accent-blue);
-            box-shadow: var(--shadow);
+        /* KPI */
+        .kpi {
+            background: var(--panel); border: 1px solid var(--line);
+            border-radius: var(--radius); padding: 16px 18px;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid var(--blue);
+            position: relative; overflow: hidden;
         }
-        .kpi-card.green { border-left-color: var(--accent-green); }
-        .kpi-card.yellow { border-left-color: var(--accent-yellow); }
-        .kpi-card.red { border-left-color: var(--accent-red); }
-        .kpi-label {
-            font-size: 12px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-        .kpi-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-        .kpi-unit {
-            font-size: 14px;
-            color: var(--text-muted);
-            font-weight: 400;
-        }
-        .kpi-trend {
-            font-size: 12px;
-            margin-top: 6px;
-        }
-        .kpi-trend.up { color: var(--accent-green); }
-        .kpi-trend.down { color: var(--accent-red); }
+        .kpi.green { border-left-color: var(--green); }
+        .kpi.amber { border-left-color: var(--amber); }
+        .kpi.red { border-left-color: var(--red); }
+        .kpi-label { font-size: 11.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--ink-muted); }
+        .kpi-value { font-size: 28px; font-weight: 800; color: var(--ink); margin-top: 6px; line-height: 1.1; }
+        .kpi-unit { font-size: 13px; font-weight: 500; color: var(--ink-muted); }
+        .kpi-trend { font-size: 11.5px; margin-top: 6px; font-weight: 600; }
+        .kpi-trend.up { color: var(--green); }
+        .kpi-trend.down { color: var(--red); }
 
-        /* Risk badges */
-        .risk-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        .risk-bajo { background: rgba(102,187,106,0.2); color: var(--accent-green); }
-        .risk-medio { background: rgba(255,167,38,0.2); color: var(--accent-yellow); }
-        .risk-alto { background: rgba(255,112,67,0.2); color: var(--accent-orange); }
-        .risk-critico { background: rgba(239,83,80,0.2); color: var(--accent-red); }
+        /* Badges */
+        .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; }
+        .badge-bajo { background: var(--green-soft); color: #15803d; }
+        .badge-medio { background: var(--amber-soft); color: #b45309; }
+        .badge-alto { background: #ffedd5; color: #c2410c; }
+        .badge-critico { background: var(--red-soft); color: #b91c1c; }
+        .badge-info { background: #e0f2fe; color: #0369a1; }
+        .badge-species { background: #ede9fe; color: #6d28d9; }
 
-        /* Pond selector */
-        .pond-selector {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
+        /* Pond chips */
+        .pond-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
         .pond-chip {
-            padding: 8px 16px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            color: var(--text-secondary);
-            transition: all 0.2s;
+            padding: 8px 14px; border-radius: 10px;
+            background: var(--panel); border: 1.5px solid var(--line);
+            cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--ink-soft);
+            transition: all .18s; display: inline-flex; align-items: center; gap: 6px;
         }
-        .pond-chip:hover { background: var(--bg-card-hover); }
-        .pond-chip.active {
-            background: var(--accent-blue);
-            color: #fff;
-            border-color: var(--accent-blue);
-        }
+        .pond-chip:hover { border-color: var(--blue); color: var(--blue-deep); transform: translateY(-1px); }
+        .pond-chip.active { background: var(--blue-deep); border-color: var(--blue-deep); color: #fff; }
 
-        /* Sensor cards */
-        .sensor-card {
-            background: var(--bg-card);
-            border-radius: 10px;
-            padding: 16px;
-            border: 1px solid var(--border-color);
-            text-align: center;
+        /* Sensor tiles */
+        .sensor-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px; }
+        .sensor {
+            background: var(--panel); border: 1px solid var(--line);
+            border-radius: var(--radius-sm); padding: 14px; text-align: center;
+            box-shadow: var(--shadow-sm); transition: transform .18s;
         }
-        .sensor-icon { font-size: 28px; margin-bottom: 8px; }
-        .sensor-name { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
-        .sensor-value { font-size: 24px; font-weight: 700; color: var(--text-primary); }
-        .sensor-unit { font-size: 12px; color: var(--text-muted); }
-        .sensor-status {
-            font-size: 11px;
-            margin-top: 6px;
-            padding: 2px 8px;
-            border-radius: 10px;
-            display: inline-block;
-        }
-        .sensor-ok { background: rgba(102,187,106,0.15); color: var(--accent-green); }
-        .sensor-warn { background: rgba(255,167,38,0.15); color: var(--accent-yellow); }
-        .sensor-alert { background: rgba(239,83,80,0.15); color: var(--accent-red); }
-
-        /* Action panel */
-        .action-panel {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-color);
-        }
-        .action-item {
-            display: flex;
-            align-items: center;
-            padding: 14px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            background: var(--bg-secondary);
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid transparent;
-        }
-        .action-item:hover { background: var(--bg-card-hover); }
-        .action-item.recommended { border-color: var(--accent-green); }
-        .action-icon { font-size: 24px; margin-right: 14px; }
-        .action-info { flex: 1; }
-        .action-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
-        .action-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-        .action-cost { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
-
-        /* Economic table */
-        .econ-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-        .econ-table th {
-            text-align: left;
-            padding: 10px 14px;
-            background: var(--bg-secondary);
-            color: var(--text-secondary);
-            font-weight: 600;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid var(--border-color);
-        }
-        .econ-table td {
-            padding: 10px 14px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .econ-table tr:hover { background: var(--bg-secondary); }
-        .profit-positive { color: var(--accent-green); font-weight: 600; }
-        .profit-negative { color: var(--accent-red); font-weight: 600; }
-
-        /* Chart containers */
-        .chart-container {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-color);
-        }
-
-        /* Farm risk map */
-        .risk-map-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 16px;
-        }
-        .farm-pond {
-            background: var(--bg-card);
-            border-radius: 10px;
-            padding: 16px;
-            border: 2px solid var(--border-color);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .farm-pond:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.3); }
-        .farm-pond.risk-bajo { border-color: var(--accent-green); }
-        .farm-pond.risk-medio { border-color: var(--accent-yellow); }
-        .farm-pond.risk-alto { border-color: var(--accent-orange); }
-        .farm-pond.risk-critico { border-color: var(--accent-red); }
+        .sensor:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        .sensor-icon { font-size: 22px; }
+        .sensor-name { font-size: 11.5px; color: var(--ink-muted); margin-top: 4px; font-weight: 600; }
+        .sensor-value { font-size: 21px; font-weight: 800; color: var(--ink); margin-top: 2px; }
+        .sensor-unit { font-size: 11px; color: var(--ink-muted); }
+        .sensor-status { display: inline-block; margin-top: 6px; padding: 2px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 700; }
+        .s-ok { background: var(--green-soft); color: #15803d; }
+        .s-warn { background: var(--amber-soft); color: #b45309; }
+        .s-alert { background: var(--red-soft); color: #b91c1c; }
 
         /* Alert banner */
         .alert-banner {
-            background: linear-gradient(135deg, rgba(239,83,80,0.15), rgba(255,112,67,0.15));
-            border: 1px solid var(--accent-red);
-            border-radius: 10px;
-            padding: 14px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
+            display: none; align-items: center; gap: 14px;
+            background: linear-gradient(120deg, #fef2f2, #fff7ed);
+            border: 1px solid #fca5a5; border-radius: var(--radius);
+            padding: 14px 18px; margin-bottom: 18px;
         }
-        .alert-icon { font-size: 24px; }
-        .alert-text { flex: 1; }
-        .alert-title { font-size: 14px; font-weight: 600; color: var(--accent-red); }
-        .alert-desc { font-size: 13px; color: var(--text-secondary); }
+        .alert-banner.show { display: flex; animation: fadeIn .3s; }
+        .alert-icon { font-size: 26px; }
+        .alert-title { font-size: 14.5px; font-weight: 800; color: #b91c1c; }
+        .alert-desc { font-size: 13px; color: #7c2d12; margin-top: 2px; }
 
         /* Buttons */
         .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 18px; border-radius: 10px; border: none;
+            font-size: 13.5px; font-weight: 700; cursor: pointer;
+            transition: all .18s; text-decoration: none;
         }
-        .btn-primary {
-            background: var(--accent-blue);
-            color: #fff;
-        }
-        .btn-primary:hover { background: #1e88e5; }
-        .btn-secondary {
-            background: var(--bg-secondary);
-            color: var(--text-secondary);
-            border: 1px solid var(--border-color);
-        }
-        .btn-secondary:hover { background: var(--bg-card-hover); }
+        .btn-primary { background: var(--blue-deep); color: #fff; }
+        .btn-primary:hover { background: #075985; transform: translateY(-1px); box-shadow: var(--shadow); }
+        .btn-secondary { background: #fff; color: var(--ink-soft); border: 1.5px solid var(--line); }
+        .btn-secondary:hover { border-color: var(--blue); color: var(--blue-deep); }
+        .btn-success { background: #15803d; color: #fff; }
+        .btn-success:hover { background: #166534; transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--blue-deep); border: 1.5px dashed #7dd3fc; }
+        .btn-ghost:hover { background: #f0f9ff; }
 
-        /* Loading */
-        .loading-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(10,25,41,0.8);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 200;
+        /* Forms */
+        .field { display: flex; flex-direction: column; gap: 5px; }
+        .field label { font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+        .input, .select {
+            padding: 9px 12px; border-radius: 9px;
+            border: 1.5px solid var(--line); background: #fff;
+            font-size: 13.5px; color: var(--ink); outline: none;
+            transition: border-color .18s, box-shadow .18s;
         }
-        .loading-overlay.active { display: flex; }
-        .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid var(--bg-secondary);
-            border-top-color: var(--accent-blue);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .input:focus, .select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(14,165,233,.15); }
+
+        /* Tables */
+        .table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--line); }
+        table.econ { width: 100%; border-collapse: collapse; font-size: 12.5px; background: #fff; }
+        table.econ th {
+            text-align: left; padding: 10px 12px; background: var(--panel-soft);
+            color: var(--ink-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .4px;
+            border-bottom: 2px solid var(--line); white-space: nowrap;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        table.econ td { padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+        table.econ tr:hover { background: #f8fafc; }
+        .pos { color: #15803d; font-weight: 700; }
+        .neg { color: #b91c1c; font-weight: 700; }
+
+        /* Actions */
+        .action-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 13px 15px; border-radius: 11px; margin-bottom: 9px;
+            background: var(--panel-soft); border: 2px solid transparent;
+            cursor: pointer; transition: all .18s;
+        }
+        .action-item:hover { background: #f0f9ff; }
+        .action-item.rec { border-color: var(--green); background: #f0fdf4; }
+        .action-icon { font-size: 22px; }
+        .action-name { font-size: 13.5px; font-weight: 700; }
+        .action-desc { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+        .action-cost { font-size: 12.5px; font-weight: 700; color: var(--ink-soft); white-space: nowrap; }
+
+        /* Species cards */
+        .species-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+        .species-card {
+            background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+            padding: 18px; box-shadow: var(--shadow-sm); cursor: pointer;
+            transition: all .2s; position: relative;
+        }
+        .species-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: #7dd3fc; }
+        .species-card.selected { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(14,165,233,.18); }
+        .species-emoji { font-size: 30px; }
+        .species-name { font-size: 15px; font-weight: 800; margin-top: 8px; }
+        .species-latin { font-size: 12px; font-style: italic; color: var(--blue-deep); }
+        .species-tag { position: absolute; top: 14px; right: 14px; }
+        .species-detail { font-size: 12.5px; color: var(--ink-soft); margin-top: 8px; line-height: 1.5; }
+        .species-params { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; margin-top: 10px; font-size: 12px; }
+        .species-params b { color: var(--ink); }
+
+        /* Steps (guía) */
+        .steps { display: flex; flex-direction: column; gap: 12px; }
+        .step { display: flex; gap: 14px; align-items: flex-start; }
+        .step-num {
+            width: 28px; height: 28px; flex: 0 0 28px; border-radius: 50%;
+            background: var(--blue-deep); color: #fff; font-weight: 800; font-size: 13px;
+            display: grid; place-items: center;
+        }
+        .step-body h4 { font-size: 13.5px; font-weight: 700; }
+        .step-body p, .step-body li { font-size: 12.5px; color: var(--ink-soft); line-height: 1.55; }
+        .step-body ul { padding-left: 18px; margin-top: 4px; }
+        code.inline {
+            background: #f1f5f9; border: 1px solid var(--line); border-radius: 6px;
+            padding: 1px 7px; font-size: 12px; font-family: Consolas, monospace; color: #be185d;
+        }
+
+        /* Risk map */
+        .risk-map { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+        .farm-block { grid-column: 1 / -1; font-size: 14.5px; font-weight: 800; color: var(--ink-soft); margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+        .farm-pond {
+            background: var(--panel); border: 2px solid var(--line); border-radius: var(--radius-sm);
+            padding: 14px; cursor: pointer; transition: all .2s;
+        }
+        .farm-pond:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        .farm-pond.bajo { border-color: var(--green); }
+        .farm-pond.medio { border-color: var(--amber); }
+        .farm-pond.alto { border-color: var(--orange); }
+        .farm-pond.critico { border-color: var(--red); }
+        .farm-pond-name { font-size: 13px; font-weight: 800; }
+        .farm-pond-risk { font-size: 24px; font-weight: 800; margin-top: 4px; }
+        .farm-pond-meta { font-size: 11px; color: var(--ink-muted); margin-top: 3px; }
+
+        /* Toasts */
+        .toasts { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 300; }
+        .toast {
+            background: #0f172a; color: #fff; border-radius: 12px;
+            padding: 12px 18px; font-size: 13px; font-weight: 600;
+            box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 10px;
+            animation: slideIn .3s ease; max-width: 380px;
+        }
+        .toast.ok { border-left: 4px solid var(--green); }
+        .toast.err { border-left: 4px solid var(--red); }
+        .toast.info { border-left: 4px solid var(--blue); }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: none; } }
+
+        /* Footer */
+        .footer {
+            border-top: 1px solid var(--line); background: #fff;
+            padding: 18px 28px; font-size: 12px; color: var(--ink-muted);
+            display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+        }
+
+        /* Empty state */
+        .empty {
+            text-align: center; padding: 40px 20px; color: var(--ink-muted);
+            font-size: 13.5px;
+        }
+        .empty .big { font-size: 42px; margin-bottom: 10px; }
+
+        /* Drop zone */
+        .dropzone {
+            border: 2px dashed #cbd5e1; border-radius: var(--radius);
+            padding: 34px 20px; text-align: center; cursor: pointer;
+            transition: all .2s; background: var(--panel-soft);
+        }
+        .dropzone:hover, .dropzone.dragover { border-color: var(--blue); background: #f0f9ff; }
+        .dropzone .dz-icon { font-size: 40px; }
+        .dropzone .dz-title { font-size: 15px; font-weight: 700; margin-top: 8px; }
+        .dropzone .dz-sub { font-size: 12.5px; color: var(--ink-muted); margin-top: 4px; }
 
         /* Responsive */
-        @media (max-width: 1024px) {
+        @media (max-width: 1100px) {
             .grid-4 { grid-template-columns: repeat(2, 1fr); }
             .grid-3 { grid-template-columns: 1fr; }
             .grid-2 { grid-template-columns: 1fr; }
+            .sensor-grid { grid-template-columns: repeat(2, 1fr); }
         }
         @media (max-width: 640px) {
-            .grid-4 { grid-template-columns: 1fr; }
-            .nav-tabs { padding: 0 16px; overflow-x: auto; }
-            .main-content { padding: 16px; }
-            .header h1 { font-size: 16px; }
+            .main { padding: 16px; }
+            .nav { padding: 0 12px; top: 104px; }
+            .header { padding: 12px 16px; }
+            .brand-sub { white-space: normal; }
+            .grid-4 { grid-template-columns: 1fr 1fr; }
+            .sensor-grid { grid-template-columns: 1fr 1fr; }
+            .footer { flex-direction: column; }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <div class="header-left">
-            <span class="header-logo">🦐</span>
-            <h1>Simulador de Bioseguridad Inteligente para Camarón
-                <small>Sistema de predicción de brotes y recomendación de políticas óptimas</small>
-            </h1>
+
+<!-- ===== HEADER ===== -->
+<header class="header">
+    <div class="header-brand">
+        <div class="brand-mark">🦐</div>
+        <div>
+            <div class="brand-title">Bioseguridad Camarón AI</div>
+            <div class="brand-sub">Predicción de brotes · Recomendaciones · Simulación económica</div>
         </div>
-        <div class="header-right">
-            <div class="header-status">
-                <span class="status-dot"></span>
-                <span id="systemStatus">Sistema operativo | Modelo: AUC 0.986 | F1 0.953</span>
+    </div>
+    <div class="header-controls">
+        <span class="pill" id="pillData"><span class="dot" id="dotData"></span><span id="pillDataText">Fuente: Simulada</span></span>
+        <span class="pill"><span class="dot"></span>Modelo AUC 0.986 · F1 0.953</span>
+        <select class="species-select" id="speciesSelect" title="Especie monitoreada"></select>
+    </div>
+</header>
+
+<!-- ===== NAV ===== -->
+<nav class="nav" id="mainNav">
+    <div class="nav-tab active" onclick="switchTab('monitor', this)">📡 Monitoreo</div>
+    <div class="nav-tab" onclick="switchTab('import', this)">📥 Importar Datos</div>
+    <div class="nav-tab" onclick="switchTab('species', this)">🦐 Especies</div>
+    <div class="nav-tab" onclick="switchTab('risk', this)">⚠️ Mapa de Riesgo</div>
+    <div class="nav-tab" onclick="switchTab('actions', this)">🎯 Recomendaciones</div>
+    <div class="nav-tab" onclick="switchTab('economic', this)">💰 Simulador Económico</div>
+</nav>
+
+<main class="main">
+
+    <!-- ===== TAB: MONITOREO ===== -->
+    <div id="tab-monitor" class="tab-panel active">
+        <div id="alertBanner" class="alert-banner">
+            <span class="alert-icon">🚨</span>
+            <div>
+                <div class="alert-title" id="alertTitle">Alerta de Riesgo Crítico</div>
+                <div class="alert-desc" id="alertDesc"></div>
+            </div>
+            <button class="btn btn-secondary" style="margin-left:auto" onclick="dismissAlert()">Entendido</button>
+        </div>
+
+        <div class="pond-selector" id="pondSelector"></div>
+
+        <div class="grid-4" style="margin-bottom:18px;">
+            <div class="kpi" id="kpiRisk"><div class="kpi-label">Probabilidad de Brote</div><div class="kpi-value" id="kpiRiskValue">--</div><div class="kpi-trend" id="kpiRiskTrend"></div></div>
+            <div class="kpi green" id="kpiMortality"><div class="kpi-label">Tasa de Mortalidad</div><div class="kpi-value" id="kpiMortalityValue">--</div><div class="kpi-trend" id="kpiMortalityTrend"></div></div>
+            <div class="kpi amber" id="kpiDensity"><div class="kpi-label">Densidad</div><div class="kpi-value" id="kpiDensityValue">--</div><div class="kpi-trend" id="kpiDensityTrend"></div></div>
+            <div class="kpi" id="kpiDays"><div class="kpi-label">Días de Cultivo</div><div class="kpi-value" id="kpiDaysValue">--</div><div class="kpi-trend" id="kpiDaysTrend"></div></div>
+        </div>
+
+        <div class="sensor-grid" id="sensorGrid"></div>
+
+        <div class="grid-2">
+            <div class="chart-box">
+                <div class="card-title">Series Temporales de Sensores (24 h) <span class="badge badge-info" id="chartSeriesSpecies"></span></div>
+                <div id="chartSensorTime" style="height: 330px;"></div>
+            </div>
+            <div class="chart-box">
+                <div class="card-title">Probabilidad de Brote (7 días)</div>
+                <div id="chartOutbreakProb" style="height: 330px;"></div>
             </div>
         </div>
     </div>
 
-    <!-- Navigation -->
-    <div class="nav-tabs">
-        <div class="nav-tab active" onclick="switchTab('monitor', this)">📡 Monitoreo</div>
-        <div class="nav-tab" onclick="switchTab('risk', this)">⚠️ Mapa de Riesgo</div>
-        <div class="nav-tab" onclick="switchTab('actions', this)">🎯 Recomendaciones</div>
-        <div class="nav-tab" onclick="switchTab('economic', this)">💰 Simulador Económico</div>
-    </div>
-
-    <div class="main-content">
-        <!-- TAB: Monitoreo -->
-        <div id="tab-monitor" class="tab-panel active">
-            <!-- Alert banner -->
-            <div id="alertBanner" class="alert-banner" style="display:none;">
-                <span class="alert-icon">🚨</span>
-                <div class="alert-text">
-                    <div class="alert-title" id="alertTitle">Alerta de Riesgo Crítico</div>
-                    <div class="alert-desc" id="alertDesc">Piscina P-003 presenta probabilidad de brote del 87%</div>
-                </div>
-                <button class="btn btn-secondary" onclick="dismissAlert()">Cerrar</button>
-            </div>
-
-            <!-- Pond selector -->
-            <div class="pond-selector" id="pondSelector"></div>
-
-            <!-- KPI Row -->
-            <div class="grid-4" style="margin-bottom: 20px;">
-                <div class="kpi-card" id="kpiRisk">
-                    <div class="kpi-label">Probabilidad de Brote</div>
-                    <div class="kpi-value" id="kpiRiskValue">--<span class="kpi-unit">%</span></div>
-                    <div class="kpi-trend" id="kpiRiskTrend"></div>
-                </div>
-                <div class="kpi-card green" id="kpiMortality">
-                    <div class="kpi-label">Tasa de Mortalidad</div>
-                    <div class="kpi-value" id="kpiMortalityValue">--<span class="kpi-unit">%</span></div>
-                    <div class="kpi-trend" id="kpiMortalityTrend"></div>
-                </div>
-                <div class="kpi-card yellow" id="kpiDensity">
-                    <div class="kpi-label">Densidad Actual</div>
-                    <div class="kpi-value" id="kpiDensityValue">--<span class="kpi-unit"> ind/m²</span></div>
-                    <div class="kpi-trend" id="kpiDensityTrend"></div>
-                </div>
-                <div class="kpi-card" id="kpiDays">
-                    <div class="kpi-label">Días de Cultivo</div>
-                    <div class="kpi-value" id="kpiDaysValue">--<span class="kpi-unit"> días</span></div>
-                    <div class="kpi-trend" id="kpiDaysTrend"></div>
-                </div>
-            </div>
-
-            <!-- Sensor cards -->
-            <div class="grid-4" style="margin-bottom: 20px;">
-                <div class="sensor-card">
-                    <div class="sensor-icon">🧪</div>
-                    <div class="sensor-name">pH</div>
-                    <div class="sensor-value" id="sensorPh">--</div>
-                    <div class="sensor-unit">unidades</div>
-                    <div class="sensor-status sensor-ok" id="sensorPhStatus">Normal</div>
-                </div>
-                <div class="sensor-card">
-                    <div class="sensor-icon">💨</div>
-                    <div class="sensor-name">Oxígeno Disuelto</div>
-                    <div class="sensor-value" id="sensorDo">--</div>
-                    <div class="sensor-unit">mg/L</div>
-                    <div class="sensor-status sensor-ok" id="sensorDoStatus">Normal</div>
-                </div>
-                <div class="sensor-card">
-                    <div class="sensor-icon">🧂</div>
-                    <div class="sensor-name">Salinidad</div>
-                    <div class="sensor-value" id="sensorSal">--</div>
-                    <div class="sensor-unit">ppt</div>
-                    <div class="sensor-status sensor-ok" id="sensorSalStatus">Normal</div>
-                </div>
-                <div class="sensor-card">
-                    <div class="sensor-icon">🌫️</div>
-                    <div class="sensor-name">Turbidez</div>
-                    <div class="sensor-value" id="sensorTurb">--</div>
-                    <div class="sensor-unit">NTU</div>
-                    <div class="sensor-status sensor-ok" id="sensorTurbStatus">Normal</div>
-                </div>
-            </div>
-            <div class="grid-4" style="margin-bottom: 20px;">
-                <div class="sensor-card">
-                    <div class="sensor-icon">🌡️</div>
-                    <div class="sensor-name">Temperatura</div>
-                    <div class="sensor-value" id="sensorTemp">--</div>
-                    <div class="sensor-unit">°C</div>
-                    <div class="sensor-status sensor-ok" id="sensorTempStatus">Normal</div>
-                </div>
-                <div class="sensor-card">
-                    <div class="sensor-icon">⚠️</div>
-                    <div class="sensor-name">Amonio</div>
-                    <div class="sensor-value" id="sensorNh3">--</div>
-                    <div class="sensor-unit">mg/L</div>
-                    <div class="sensor-status sensor-ok" id="sensorNh3Status">Normal</div>
-                </div>
-                <div class="sensor-card">
-                    <div class="sensor-icon">🐟</div>
-                    <div class="sensor-name">Alimentación</div>
-                    <div class="sensor-value" id="sensorFeed">--</div>
-                    <div class="sensor-unit">kg/día</div>
-                    <div class="sensor-status sensor-ok" id="sensorFeedStatus">Normal</div>
-                </div>
-                <div class="sensor-card">
-                    <div class="sensor-icon">📊</div>
-                    <div class="sensor-name">Crecimiento</div>
-                    <div class="sensor-value" id="sensorGrowth">--</div>
-                    <div class="sensor-unit">g</div>
-                    <div class="sensor-status sensor-ok" id="sensorGrowthStatus">Normal</div>
-                </div>
-            </div>
-
-            <!-- Time series charts -->
-            <div class="grid-2">
-                <div class="chart-container">
-                    <div class="card-header">
-                        <span class="card-title">Series Temporales de Sensores (24h)</span>
+    <!-- ===== TAB: IMPORTAR DATOS ===== -->
+    <div id="tab-import" class="tab-panel">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title">📥 Importar datos reales de piscinas</div>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-num">1</div>
+                        <div class="step-body">
+                            <h4>Descarga la plantilla</h4>
+                            <p>Contiene el formato exacto con las columnas requeridas. <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;margin-top:6px" onclick="downloadTemplate()">⬇️ Descargar plantilla CSV</button></p>
+                        </div>
                     </div>
-                    <div id="chartSensorTime" style="height: 350px;"></div>
-                </div>
-                <div class="chart-container">
-                    <div class="card-header">
-                        <span class="card-title">Probabilidad de Brote (7 días)</span>
+                    <div class="step">
+                        <div class="step-num">2</div>
+                        <div class="step-body">
+                            <h4>Completa con tus lecturas</h4>
+                            <p>Columnas (en orden): <code class="inline">timestamp</code>, <code class="inline">pond_id</code>, <code class="inline">ph</code>, <code class="inline">dissolved_oxygen</code>, <code class="inline">salinity</code>, <code class="inline">turbidity</code>, <code class="inline">temperature</code>, <code class="inline">ammonia</code>. Opcional: <code class="inline">outbreak</code> (0/1).</p>
+                            <ul>
+                                <li><code class="inline">timestamp</code>: formato <code class="inline">YYYY-MM-DD HH:MM</code></li>
+                                <li><code class="inline">pond_id</code>: identificador de tu piscina, ej. <code class="inline">P-001</code></li>
+                                <li>Sensores en unidades: pH (0–14), O₂ disuelto (mg/L), salinidad (ppt), turbidez (NTU), temperatura (°C), amonio (mg/L)</li>
+                            </ul>
+                        </div>
                     </div>
-                    <div id="chartOutbreakProb" style="height: 350px;"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- TAB: Risk Map -->
-        <div id="tab-risk" class="tab-panel">
-            <div class="card" style="margin-bottom: 20px;">
-                <div class="card-header">
-                    <span class="card-title">Mapa de Riesgo por Granja</span>
-                    <div>
-                        <button class="btn btn-secondary" onclick="refreshRiskMap()">🔄 Actualizar</button>
+                    <div class="step">
+                        <div class="step-num">3</div>
+                        <div class="step-body">
+                            <h4>Sube el archivo</h4>
+                            <p>Arrastra tu CSV a la zona azul o haz clic para seleccionarlo. Los datos se validan fila por fila y se guardan en tu navegador.</p>
+                        </div>
                     </div>
-                </div>
-                <div id="farmRiskMap" class="risk-map-container"></div>
-            </div>
-            <div class="chart-container">
-                <div class="card-header">
-                    <span class="card-title">Distribución de Riesgo por Granja</span>
-                </div>
-                <div id="chartRiskDist" style="height: 400px;"></div>
-            </div>
-        </div>
-
-        <!-- TAB: Actions -->
-        <div id="tab-actions" class="tab-panel">
-            <div class="grid-2">
-                <div class="action-panel">
-                    <div class="card-header">
-                        <span class="card-title">Acciones Recomendadas</span>
-                        <span id="recommendationConfidence" class="risk-badge risk-bajo">Confianza: --</span>
+                    <div class="step">
+                        <div class="step-num">4</div>
+                        <div class="step-body">
+                            <h4>Monitorea con tu especie</h4>
+                            <p>Elige en la cabecera la especie de tu piscina (ej. <b>Camarón Blanco</b>). Los umbrales de riesgo se ajustan automáticamente a sus rangos óptimos.</p>
+                        </div>
                     </div>
-                    <div id="actionList"></div>
-                </div>
-                <div class="action-panel">
-                    <div class="card-header">
-                        <span class="card-title">Detalle de la Recomendación</span>
-                    </div>
-                    <div id="actionDetail">
-                        <p style="color: var(--text-muted); text-align: center; padding: 40px;">
-                            Seleccione una piscina en la pestaña de Monitoreo para ver recomendaciones detalladas.
-                        </p>
-                    </div>
-                </div>
-            </div>
-            <div class="chart-container" style="margin-top: 20px;">
-                <div class="card-header">
-                    <span class="card-title">Histórico de Acciones Recomendadas (30 días)</span>
-                </div>
-                <div id="chartActionHistory" style="height: 350px;"></div>
-            </div>
-        </div>
-
-        <!-- TAB: Economic Simulator -->
-        <div id="tab-economic" class="tab-panel">
-            <div class="card" style="margin-bottom: 20px;">
-                <div class="card-header">
-                    <span class="card-title">Simulador de Intervención Económica</span>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 16px; align-items: end; margin-bottom: 16px;">
-                    <div>
-                        <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px;">Piscina</label>
-                        <select id="simPond" class="btn btn-secondary" style="width: 100%;"></select>
-                    </div>
-                    <div>
-                        <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px;">Acción</label>
-                        <select id="simAction" class="btn btn-secondary" style="width: 100%;">
-                            <option value="0">Sin acción</option>
-                            <option value="1">Aumentar flujo de agua</option>
-                            <option value="2">Reducir alimentación 20%</option>
-                            <option value="3">Aplicar tratamiento</option>
-                            <option value="4">Reducir densidad</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 6px;">Duración (días)</label>
-                        <input type="number" id="simDuration" value="30" min="1" max="120" class="btn btn-secondary" style="width: 100%;">
-                    </div>
-                    <button class="btn btn-primary" onclick="runSimulation()">▶️ Simular</button>
-                </div>
-            </div>
-
-            <div class="grid-2" style="margin-bottom: 20px;">
-                <div class="kpi-card green" id="simLossAvoided">
-                    <div class="kpi-label">Pérdidas Evitadas</div>
-                    <div class="kpi-value" id="simLossValue">$--</div>
-                </div>
-                <div class="kpi-card yellow" id="simActionCost">
-                    <div class="kpi-label">Costo de Acción</div>
-                    <div class="kpi-value" id="simCostValue">$--</div>
-                </div>
-            </div>
-            <div class="grid-2" style="margin-bottom: 20px;">
-                <div class="kpi-card" id="simNetBenefit">
-                    <div class="kpi-label">Beneficio Neto</div>
-                    <div class="kpi-value" id="simNetValue">$--</div>
-                </div>
-                <div class="kpi-card green" id="simROI">
-                    <div class="kpi-label">ROI de Intervención</div>
-                    <div class="kpi-value" id="simROIValue">--<span class="kpi-unit">%</span></div>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-header">
-                    <span class="card-title">Comparación de Políticas</span>
+                <div class="card-title">Subir archivo CSV</div>
+                <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+                    <div class="dz-icon">📄</div>
+                    <div class="dz-title">Arrastra tu CSV aquí o haz clic</div>
+                    <div class="dz-sub">Solo .csv · Máx 5 MB</div>
+                    <input type="file" id="fileInput" accept=".csv,text/csv" style="display:none">
                 </div>
-                <table class="econ-table" id="policyComparisonTable">
-                    <thead>
-                        <tr>
-                            <th>Política</th>
-                            <th>Costo ($)</th>
-                            <th>Pérdidas Evitadas ($)</th>
-                            <th>Beneficio Neto ($)</th>
-                            <th>ROI (%)</th>
-                            <th>Mortalidad Final (%)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="policyTableBody"></tbody>
-                </table>
+                <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="btn btn-secondary" onclick="loadSampleData()">🧪 Cargar datos de ejemplo</button>
+                    <button class="btn btn-ghost" onclick="clearImportedData()">🗑️ Quitar datos importados</button>
+                </div>
+                <div style="margin-top:18px; border-top:1px solid var(--line); padding-top:14px;">
+                    <div class="card-title" style="margin-bottom:8px">➕ Entrada manual de lectura</div>
+                    <div class="grid-2" style="gap:10px;">
+                        <div class="field"><label>Piscina</label><input class="input" id="mPond" placeholder="P-001"></div>
+                        <div class="field"><label>Fecha y hora</label><input class="input" id="mTs" type="datetime-local"></div>
+                        <div class="field"><label>pH</label><input class="input" id="mPh" type="number" step="0.01" placeholder="7.8"></div>
+                        <div class="field"><label>O₂ disuelto (mg/L)</label><input class="input" id="mDo" type="number" step="0.1" placeholder="5.2"></div>
+                        <div class="field"><label>Salinidad (ppt)</label><input class="input" id="mSal" type="number" step="0.1" placeholder="30"></div>
+                        <div class="field"><label>Turbidez (NTU)</label><input class="input" id="mTurb" type="number" step="0.1" placeholder="25"></div>
+                        <div class="field"><label>Temperatura (°C)</label><input class="input" id="mTemp" type="number" step="0.1" placeholder="29"></div>
+                        <div class="field"><label>Amonio (mg/L)</label><input class="input" id="mNh3" type="number" step="0.01" placeholder="0.35"></div>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top:12px; width:100%" onclick="addManualReading()">Guardar lectura</button>
+                </div>
             </div>
+        </div>
 
-            <div class="chart-container" style="margin-top: 20px;">
-                <div class="card-header">
-                    <span class="card-title">Proyección Económica por Política</span>
-                </div>
-                <div id="chartEconProjection" style="height: 400px;"></div>
+        <div class="card" style="margin-top:18px;">
+            <div class="card-title">Vista previa de datos importados <span id="importSummary" class="badge badge-info"></span></div>
+            <div class="table-wrap" id="importTableWrap">
+                <div class="empty"><div class="big">📭</div>Aún no hay datos importados. Sube un CSV o usa los datos de ejemplo.</div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:18px;">
+            <div class="card-title">🔌 Conectar con la API (opcional)</div>
+            <p style="font-size:12.5px; color:var(--ink-soft); margin-bottom:10px;">Si tienes desplegada la API FastAPI del proyecto, pega su URL base para sincronizar el estado real de las piscinas. Requiere CORS habilitado (ya incluido en la API).</p>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <input class="input" id="apiUrl" placeholder="https://tu-api.com" style="flex:1; min-width:240px;">
+                <button class="btn btn-primary" onclick="fetchFromApi()">Sincronizar</button>
             </div>
         </div>
     </div>
 
-    <!-- Loading overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
+    <!-- ===== TAB: ESPECIES ===== -->
+    <div id="tab-species" class="tab-panel">
+        <div class="card" style="margin-bottom:18px;">
+            <div class="card-title">🦐 Especies soportadas — Ecuador y otras especies marinas</div>
+            <p style="font-size:13px; color:var(--ink-soft); line-height:1.6;">
+                El sistema ajusta automáticamente los <b>umbrales de riesgo</b>, la <b>curva de crecimiento</b>, las <b>tallas comerciales</b> y el <b>precio</b> según la especie seleccionada. Ecuador lidera la producción mundial de <b>camarón blanco (Litopenaeus vannamei)</b>; el resto de especies permiten extrapolar el mismo modelo a otros cultivos marinos.
+            </p>
+        </div>
+        <div class="species-grid" id="speciesGrid"></div>
+
+        <div class="grid-2" style="margin-top:18px;">
+            <div class="card">
+                <div class="card-title">Parámetros óptimos por especie</div>
+                <div class="table-wrap">
+                    <table class="econ" id="speciesParamsTable">
+                        <thead><tr><th>Parámetro</th><th>Óptimo</th><th>Tolerable</th><th>Crítico</th></tr></thead>
+                        <tbody id="speciesParamsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">Tallas comerciales — Ecuador (colas por libra)</div>
+                <div class="table-wrap">
+                    <table class="econ" id="gradesTable">
+                        <thead><tr><th>Talla</th><th>Peso aprox. (g)</th><th>Uso</th></tr></thead>
+                        <tbody id="gradesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-box" style="margin-top:18px;">
+            <div class="card-title">Curva de crecimiento proyectada</div>
+            <div id="chartGrowth" style="height: 360px;"></div>
+        </div>
     </div>
 
-    <script>
-    // ============================================
-    // DATA LAYER — Mock data generation
-    // ============================================
-    const FARMS = [
-        { id: 'F01', name: 'Granja Costa Azul', ponds: ['P-001','P-002','P-003','P-004','P-005'] },
-        { id: 'F02', name: 'Granja Río Verde', ponds: ['P-006','P-007','P-008','P-009','P-010'] },
-        { id: 'F03', name: 'Granja Bahía Sur', ponds: ['P-011','P-012','P-013','P-014','P-015'] },
-    ];
+    <!-- ===== TAB: MAPA DE RIESGO ===== -->
+    <div id="tab-risk" class="tab-panel">
+        <div class="card" style="margin-bottom:18px;">
+            <div class="card-title">Mapa de riesgo por granja <button class="btn btn-secondary" style="padding:5px 12px;font-size:12px" onclick="refreshRiskMap()">🔄 Actualizar</button></div>
+            <div id="farmRiskMap" class="risk-map"></div>
+        </div>
+        <div class="chart-box">
+            <div class="card-title">Distribución de riesgo por granja</div>
+            <div id="chartRiskDist" style="height: 380px;"></div>
+        </div>
+    </div>
 
-    const ALL_PONDS = FARMS.flatMap(f => f.ponds.map(p => ({ pondId: p, farmId: f.id, farmName: f.name })));
+    <!-- ===== TAB: RECOMENDACIONES ===== -->
+    <div id="tab-actions" class="tab-panel">
+        <div class="grid-2">
+            <div class="card">
+                <div class="card-title">Acciones recomendadas <span id="recommendationConfidence" class="badge badge-info">Confianza: --</span></div>
+                <div id="actionList"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">Detalle de la recomendación</div>
+                <div id="actionDetail"><div class="empty"><div class="big">🎯</div>Selecciona una piscina en Monitoreo para ver la recomendación.</div></div>
+            </div>
+        </div>
+        <div class="chart-box" style="margin-top:18px;">
+            <div class="card-title">Histórico de acciones recomendadas (30 días)</div>
+            <div id="chartActionHistory" style="height: 320px;"></div>
+        </div>
+    </div>
 
-    const ACTIONS = [
-        { id: 0, name: 'Sin acción', icon: '⏸️', desc: 'Mantener condiciones actuales', cost: 0, costUnit: '$/día' },
-        { id: 1, name: 'Aumentar flujo de agua', icon: '💧', desc: 'Mejora calidad de agua, reduce amonio y turbidez', cost: 50, costUnit: '$/día' },
-        { id: 2, name: 'Reducir alimentación 20%', icon: '🍽️', desc: 'Disminuye costo de alimento y exceso de nutrientes', cost: -30, costUnit: '$/día' },
-        { id: 3, name: 'Aplicar tratamiento', icon: '🧴', desc: 'Tratamiento químico para controlar patógenos', cost: 200, costUnit: '$/evento' },
-        { id: 4, name: 'Reducir densidad', icon: '🐟', desc: 'Translado de camarones a otra piscina', cost: 500, costUnit: '$/evento' },
-    ];
+    <!-- ===== TAB: SIMULADOR ECONÓMICO ===== -->
+    <div id="tab-economic" class="tab-panel">
+        <div class="card" style="margin-bottom:18px;">
+            <div class="card-title">Simulador de intervención económica</div>
+            <div class="grid-3" style="align-items:end;">
+                <div class="field"><label>Piscina</label><select class="select" id="simPond"></select></div>
+                <div class="field"><label>Acción</label><select class="select" id="simAction">
+                    <option value="0">Sin acción</option>
+                    <option value="1">Aumentar flujo de agua</option>
+                    <option value="2">Reducir alimentación 20%</option>
+                    <option value="3">Aplicar tratamiento</option>
+                    <option value="4">Reducir densidad</option>
+                </select></div>
+                <div class="field"><label>Duración (días)</label><input class="input" id="simDuration" type="number" value="30" min="1" max="120"></div>
+            </div>
+            <button class="btn btn-primary" style="margin-top:14px" onclick="runSimulation()">▶️ Simular intervención</button>
+        </div>
 
-    // Random with seed for reproducibility
-    let seed = 42;
-    function seededRandom() {
-        seed = (seed * 9301 + 49297) % 233280;
-        return seed / 233280;
-    }
-    function rand(min, max) { return min + Math.random() * (max - min); }
+        <div class="grid-4" style="margin-bottom:18px;">
+            <div class="kpi green"><div class="kpi-label">Pérdidas Evitadas</div><div class="kpi-value" id="simLossValue">$--</div></div>
+            <div class="kpi amber"><div class="kpi-label">Costo de Acción</div><div class="kpi-value" id="simCostValue">$--</div></div>
+            <div class="kpi" id="simNetKpi"><div class="kpi-label">Beneficio Neto</div><div class="kpi-value" id="simNetValue">$--</div></div>
+            <div class="kpi green" id="simRoiKpi"><div class="kpi-label">ROI de Intervención</div><div class="kpi-value" id="simROIValue">--</div></div>
+        </div>
 
-    // Generate pond state
-    function generatePondState(pondId) {
-        const r = Math.random();
-        let baseRisk;
-        if (pondId === 'P-003' || pondId === 'P-008') baseRisk = rand(0.75, 0.92);
-        else if (pondId === 'P-001' || pondId === 'P-006' || pondId === 'P-012') baseRisk = rand(0.4, 0.65);
-        else baseRisk = rand(0.05, 0.3);
+        <div class="card" style="margin-bottom:18px;">
+            <div class="card-title">Comparación de políticas</div>
+            <div class="table-wrap">
+                <table class="econ">
+                    <thead><tr><th>Política</th><th>Costo ($)</th><th>Pérdidas Evitadas ($)</th><th>Beneficio Neto ($)</th><th>ROI (%)</th><th>Mortalidad Final (%)</th></tr></thead>
+                    <tbody id="policyTableBody"></tbody>
+                </table>
+            </div>
+        </div>
 
-        const risk = Math.min(1, baseRisk + rand(-0.05, 0.05));
-        const mortality = risk > 0.7 ? rand(8, 18) : risk > 0.4 ? rand(3, 8) : rand(0.5, 3);
-        const density = Math.floor(rand(60, 110));
-        const days = Math.floor(rand(20, 110));
+        <div class="chart-box">
+            <div class="card-title">Proyección económica por política</div>
+            <div id="chartEconProjection" style="height: 380px;"></div>
+        </div>
+    </div>
+</main>
 
-        const ph = risk > 0.6 ? rand(6.0, 6.8) : rand(7.2, 8.4);
-        const doLevel = risk > 0.6 ? rand(2.0, 3.5) : rand(4.5, 7.5);
-        const salinity = rand(28, 38);
-        const turbidity = risk > 0.5 ? rand(60, 120) : rand(10, 45);
-        const temp = rand(26, 32);
-        const ammonia = risk > 0.6 ? rand(1.5, 4.5) : rand(0.05, 1.0);
-        const feed = density * 0.05 * rand(0.8, 1.2);
-        const growth = days * 0.2;
+<footer class="footer">
+    <span>🦐 <b>Bioseguridad Camarón AI</b> — Sistema de predicción de brotes con DL + RL</span>
+    <span id="footerData">Fuente: datos simulados · Modelo RandomForest+OCSVM (AUC 0.986)</span>
+</footer>
 
-        return { pondId, risk, mortality, density, days, sensors: { ph, do: doLevel, salinity, turbidity, temp, ammonia, feed, growth } };
-    }
+<div class="toasts" id="toasts"></div>
 
-    function getRiskLevel(prob) {
-        if (prob >= 0.75) return { label: 'crítico', class: 'risk-critico', text: 'Crítico' };
-        if (prob >= 0.5) return { label: 'alto', class: 'risk-alto', text: 'Alto' };
-        if (prob >= 0.25) return { label: 'medio', class: 'risk-medio', text: 'Medio' };
-        return { label: 'bajo', class: 'risk-bajo', text: 'Bajo' };
-    }
-
-    function getSensorStatus(sensor, value) {
-        const ranges = {
-            ph: { ok: [6.8, 8.5], warn: [6.0, 9.0] },
-            do: { ok: [4.0, 8.0], warn: [2.5, 10] },
-            salinity: { ok: [25, 40], warn: [15, 45] },
+<script>
+// ============================================================
+// BASE DE DATOS DE ESPECIES (Ecuador + otras especies marinas)
+// ============================================================
+const SPECIES = [
+    {
+        id: 'vannamei', emoji: '🦐',
+        nombre: 'Camarón Blanco del Pacífico',
+        cientifico: 'Litopenaeus vannamei',
+        origen: 'Ecuador · especie dominante (~90% de la acuicultura nacional)',
+        tipo: 'Crustáceo · Penaeidae',
+        ciclo: 110, crecimiento: 0.2, talla_cosecha: '11–15 g (U/30 – U/20)',
+        precio_usd_kg: 6.5, salinidad_tipo: 'Marino-eurihalino (5–45 ppt)',
+        rangos: {
+            ph: { ok: [7.0, 8.5], warn: [6.5, 9.0] },
+            dissolved_oxygen: { ok: [4.0, 8.0], warn: [2.5, 10] },
+            salinity: { ok: [15, 35], warn: [5, 45] },
             turbidity: { ok: [0, 50], warn: [50, 100] },
-            temp: { ok: [24, 33], warn: [20, 36] },
-            ammonia: { ok: [0, 1.0], warn: [1.0, 2.5] },
-        };
-        const r = ranges[sensor];
-        if (!r) return { class: 'sensor-ok', text: 'Normal' };
-        if (value >= r.ok[0] && value <= r.ok[1]) return { class: 'sensor-ok', text: 'Normal' };
-        if (value >= r.warn[0] && value <= r.warn[1]) return { class: 'sensor-warn', text: 'Alerta' };
-        return { class: 'sensor-alert', text: 'Crítico' };
+            temperature: { ok: [26, 32], warn: [22, 35] },
+            ammonia: { ok: [0, 1.0], warn: [1.0, 2.5] }
+        },
+        detalle: 'La base de la industria camaronera ecuatoriana (camarón de mayor tamaño promedio del mundo). Eurihalino, resistente, crecimiento rápido. Tallas de exportación medidas en colas por libra.',
+        tallas: [
+            { talla: 'U/10', g: '> 45.4', uso: 'Premium (mercados gourmet)' },
+            { talla: 'U/12', g: '37.8–45.4', uso: 'Exportación premium' },
+            { talla: 'U/15', g: '30.2–37.8', uso: 'Exportación' },
+            { talla: 'U/20', g: '22.7–30.2', uso: 'Exportación' },
+            { talla: '21/25', g: '18.1–22.7', uso: 'Exportación común' },
+            { talla: '26/30', g: '15.1–18.1', uso: 'Exportación común' },
+            { talla: '31/35', g: '13.0–15.1', uso: 'Mercado local/regional' },
+            { talla: '36/40', g: '11.3–13.0', uso: 'Mercado local' },
+            { talla: '41/50', g: '9.1–11.3', uso: 'Mercado local' },
+            { talla: '51/60', g: '7.6–9.1', uso: 'Menor valor' },
+            { talla: '61/70', g: '6.5–7.6', uso: 'Menor valor' },
+            { talla: '71/90', g: '5.0–6.5', uso: 'Menor valor' },
+            { talla: '91/120', g: '3.8–5.0', uso: 'Menor valor' }
+        ]
+    },
+    {
+        id: 'stylirostris', emoji: '🦐',
+        nombre: 'Camarón Azul',
+        cientifico: 'Penaeus stylirostris',
+        origen: 'Pacífico americano · cultivado históricamente en Ecuador',
+        tipo: 'Crustáceo · Penaeidae',
+        ciclo: 120, crecimiento: 0.16, talla_cosecha: '12–16 g',
+        precio_usd_kg: 5.8, salinidad_tipo: 'Marino (25–40 ppt)',
+        rangos: {
+            ph: { ok: [7.2, 8.6], warn: [6.8, 9.2] },
+            dissolved_oxygen: { ok: [4.0, 8.0], warn: [2.8, 9.5] },
+            salinity: { ok: [25, 40], warn: [15, 45] },
+            turbidity: { ok: [0, 40], warn: [40, 90] },
+            temperature: { ok: [24, 30], warn: [20, 33] },
+            ammonia: { ok: [0, 0.8], warn: [0.8, 2.0] }
+        },
+        detalle: 'Más tolerante a temperaturas bajas que el vannamei. Su cultivo decayó por susceptibilidad al virus IHHNV. Aún relevante en estudios genéticos y zonas de aguas frías.',
+        tallas: [
+            { talla: 'U/15', g: '30.2–37.8', uso: 'Exportación' },
+            { talla: 'U/20', g: '22.7–30.2', uso: 'Exportación' },
+            { talla: '21/25', g: '18.1–22.7', uso: 'Exportación común' },
+            { talla: '26/30', g: '15.1–18.1', uso: 'Exportación común' },
+            { talla: '31/35', g: '13.0–15.1', uso: 'Mercado regional' },
+            { talla: '36/40', g: '11.3–13.0', uso: 'Mercado local' },
+            { talla: '41/50', g: '9.1–11.3', uso: 'Mercado local' }
+        ]
+    },
+    {
+        id: 'monodon', emoji: '🦐',
+        nombre: 'Camarón Tigre Gigante',
+        cientifico: 'Penaeus monodon',
+        origen: 'Indo-Pacífico · importado ocasionalmente en América',
+        tipo: 'Crustáceo · Penaeidae',
+        ciclo: 130, crecimiento: 0.28, talla_cosecha: '20–35 g',
+        precio_usd_kg: 7.2, salinidad_tipo: 'Marino (15–40 ppt)',
+        rangos: {
+            ph: { ok: [7.0, 8.5], warn: [6.5, 9.0] },
+            dissolved_oxygen: { ok: [4.5, 8.0], warn: [3.0, 9.5] },
+            salinity: { ok: [15, 40], warn: [8, 45] },
+            turbidity: { ok: [0, 45], warn: [45, 95] },
+            temperature: { ok: [27, 32], warn: [24, 34] },
+            ammonia: { ok: [0, 0.8], warn: [0.8, 2.0] }
+        },
+        detalle: 'La especie más grande de camarón peneido (hasta 35 cm). Crecimiento rápido pero canibalismo y temperamento agresivo; demanda mayor control de densidad.',
+        tallas: [
+            { talla: 'U/5', g: '> 90', uso: 'Premium' },
+            { talla: 'U/8', g: '56.7–90', uso: 'Premium' },
+            { talla: 'U/10', g: '45.4–56.7', uso: 'Exportación' },
+            { talla: 'U/12', g: '37.8–45.4', uso: 'Exportación' },
+            { talla: 'U/15', g: '30.2–37.8', uso: 'Exportación' },
+            { talla: 'U/20', g: '22.7–30.2', uso: 'Exportación' },
+            { talla: '21/25', g: '18.1–22.7', uso: 'Mercado regional' }
+        ]
+    },
+    {
+        id: 'tilapia', emoji: '🐟',
+        nombre: 'Tilapia del Nilo',
+        cientifico: 'Oreochromis niloticus',
+        origen: 'África · cultivada en agua dulce (extrapolación)',
+        tipo: 'Pez · Cichlidae',
+        ciclo: 180, crecimiento: 2.2, talla_cosecha: '400–600 g',
+        precio_usd_kg: 2.8, salinidad_tipo: 'Dulceacuícola (0–15 ppt)',
+        rangos: {
+            ph: { ok: [6.5, 9.0], warn: [5.5, 9.5] },
+            dissolved_oxygen: { ok: [3.0, 8.0], warn: [2.0, 9.5] },
+            salinity: { ok: [0, 15], warn: [0, 25] },
+            turbidity: { ok: [0, 60], warn: [60, 120] },
+            temperature: { ok: [25, 32], warn: [20, 35] },
+            ammonia: { ok: [0, 0.8], warn: [0.8, 2.0] }
+        },
+        detalle: 'Ejemplo de extrapolación del modelo a peces de agua dulce. Robusta y tolerante, pero sensible a amonio y baja concentración de oxígeno.',
+        tallas: [
+            { talla: '> 600 g', g: '600+', uso: 'Filete / entero grande' },
+            { talla: '400–600 g', g: '400–600', uso: 'Mercado común' },
+            { talla: '250–400 g', g: '250–400', uso: 'Mercado local' }
+        ]
+    },
+    {
+        id: 'trucha', emoji: '🐟',
+        nombre: 'Trucha Arcoíris',
+        cientifico: 'Oncorhynchus mykiss',
+        origen: 'Norteamérica · cultivo en aguas frías (extrapolación)',
+        tipo: 'Pez · Salmonidae',
+        ciclo: 240, crecimiento: 1.5, talla_cosecha: '250–350 g',
+        precio_usd_kg: 4.5, salinidad_tipo: 'Dulceacuícola fría (0–10 ppt)',
+        rangos: {
+            ph: { ok: [6.5, 8.0], warn: [5.8, 8.5] },
+            dissolved_oxygen: { ok: [6.0, 11], warn: [4.5, 12] },
+            salinity: { ok: [0, 10], warn: [0, 15] },
+            turbidity: { ok: [0, 30], warn: [30, 70] },
+            temperature: { ok: [10, 18], warn: [6, 20] },
+            ammonia: { ok: [0, 0.5], warn: [0.5, 1.2] }
+        },
+        detalle: 'Exige aguas frías y muy oxigenadas (OD > 6 mg/L). El modelo ajusta umbrales de temperatura y oxígeno drásticamente frente al camarón.',
+        tallas: [
+            { talla: '> 400 g', g: '400+', uso: 'Filete / ahumado' },
+            { talla: '250–400 g', g: '250–400', uso: 'Mercado común' },
+            { talla: '150–250 g', g: '150–250', uso: 'Mercado local' }
+        ]
+    },
+    {
+        id: 'salmon', emoji: '🐟',
+        nombre: 'Salmón del Atlántico',
+        cientifico: 'Salmo salar',
+        origen: 'Atlántico Norte · maricultura (extrapolación)',
+        tipo: 'Pez · Salmonidae',
+        ciclo: 720, crecimiento: 1.8, talla_cosecha: '3–5 kg',
+        precio_usd_kg: 9.0, salinidad_tipo: 'Marino frío (25–35 ppt)',
+        rangos: {
+            ph: { ok: [6.8, 8.2], warn: [6.2, 8.7] },
+            dissolved_oxygen: { ok: [7.0, 12], warn: [5.5, 13] },
+            salinity: { ok: [25, 35], warn: [15, 40] },
+            turbidity: { ok: [0, 25], warn: [25, 60] },
+            temperature: { ok: [6, 14], warn: [3, 17] },
+            ammonia: { ok: [0, 0.4], warn: [0.4, 1.0] }
+        },
+        detalle: 'Referencia de maricultura a gran escala. Umbrales estrictos de temperatura y oxígeno; modelo extrapolado a jaulas marinas.',
+        tallas: [
+            { talla: '5–7 kg', g: '5000–7000', uso: 'Exportación' },
+            { talla: '3–5 kg', g: '3000–5000', uso: 'Mercado común' },
+            { talla: '2–3 kg', g: '2000–3000', uso: 'Mercado local' }
+        ]
+    },
+    {
+        id: 'corvina', emoji: '🐟',
+        nombre: 'Corvina / Róbalo',
+        cientifico: 'Centropomus viridis',
+        origen: 'Pacífico ecuatoriano · maricultura emergente (extrapolación)',
+        tipo: 'Pez · Centropomidae',
+        ciclo: 365, crecimiento: 1.0, talla_cosecha: '800 g – 1.2 kg',
+        precio_usd_kg: 8.0, salinidad_tipo: 'Marino-estuarino (5–35 ppt)',
+        rangos: {
+            ph: { ok: [7.0, 8.5], warn: [6.5, 9.0] },
+            dissolved_oxygen: { ok: [4.0, 8.0], warn: [2.5, 9.5] },
+            salinity: { ok: [5, 35], warn: [2, 40] },
+            turbidity: { ok: [0, 40], warn: [40, 90] },
+            temperature: { ok: [24, 30], warn: [20, 33] },
+            ammonia: { ok: [0, 0.6], warn: [0.6, 1.5] }
+        },
+        detalle: 'Especie nativa del Pacífico ecuatoriano con potencial creciente en maricultura. Alto valor comercial en mercado local y restaurantes.',
+        tallas: [
+            { talla: '> 1.2 kg', g: '1200+', uso: 'Restaurantes premium' },
+            { talla: '800 g – 1.2 kg', g: '800–1200', uso: 'Mercado común' },
+            { talla: '500–800 g', g: '500–800', uso: 'Mercado local' }
+        ]
     }
+];
 
-    // ============================================
-    // STATE
-    // ============================================
-    let currentPond = 'P-001';
-    let pondStates = {};
+// ============================================================
+// ESTADO DE LA APP
+// ============================================================
+const ACTIONS = [
+    { id: 0, name: 'Sin acción', icon: '⏸️', desc: 'Mantener condiciones actuales y monitoreo continuo', cost: 0, costUnit: '$/día' },
+    { id: 1, name: 'Aumentar flujo de agua', icon: '💧', desc: 'Mejora calidad del agua, reduce amonio y turbidez', cost: 50, costUnit: '$/día' },
+    { id: 2, name: 'Reducir alimentación 20%', icon: '🍽️', desc: 'Disminuye costo de alimento y exceso de nutrientes', cost: -30, costUnit: '$/día' },
+    { id: 3, name: 'Aplicar tratamiento', icon: '🧴', desc: 'Tratamiento químico para controlar patógenos', cost: 200, costUnit: '$/evento' },
+    { id: 4, name: 'Reducir densidad', icon: '🐟', desc: 'Transferencia de individuos a otra piscina', cost: 500, costUnit: '$/evento' }
+];
 
-    function initPondStates() {
-        ALL_PONDS.forEach(p => { pondStates[p.pondId] = generatePondState(p.pondId); });
-    }
+const FARMS = [
+    { id: 'F01', name: 'Granja Costa Azul', ponds: ['P-001', 'P-002', 'P-003', 'P-004', 'P-005'] },
+    { id: 'F02', name: 'Granja Río Verde', ponds: ['P-006', 'P-007', 'P-008', 'P-009', 'P-010'] },
+    { id: 'F03', name: 'Granja Bahía Sur', ponds: ['P-011', 'P-012', 'P-013', 'P-014', 'P-015'] }
+];
+const ALL_PONDS = FARMS.flatMap(f => f.ponds.map(p => ({ pondId: p, farmId: f.id, farmName: f.name })));
 
-    // ============================================
-    // TAB SWITCHING
-    // ============================================
-    function switchTab(tab, el) {
-        document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
-        document.getElementById('tab-' + tab).classList.add('active');
-        if (el) {
-            el.classList.add('active');
-        } else {
-            const tabs = document.querySelectorAll('.nav-tab');
-            const idx = ['monitor', 'risk', 'actions', 'economic'].indexOf(tab);
-            if (tabs[idx]) tabs[idx].classList.add('active');
-        }
+const state = {
+    species: 'vannamei',
+    currentPond: 'P-001',
+    pondStates: {},
+    imported: null,          // { pond_id -> { readings: [...], species } }
+    importedCount: 0,
+    apiUrl: ''
+};
 
-        if (tab === 'risk') renderRiskMap();
-        if (tab === 'actions') renderActions();
-        if (tab === 'economic') { initEconomicTab(); }
-    }
+// ============================================================
+// UTILIDADES
+// ============================================================
+function rand(min, max) { return min + Math.random() * (max - min); }
 
-    // ============================================
-    // POND SELECTOR
-    // ============================================
-    function renderPondSelector() {
-        const container = document.getElementById('pondSelector');
-        container.innerHTML = ALL_PONDS.map(p => {
-            const state = pondStates[p.pondId];
-            const risk = getRiskLevel(state.risk);
-            return `<div class="pond-chip ${p.pondId === currentPond ? 'active' : ''}" onclick="selectPond('${p.pondId}')">${p.pondId} <span class="risk-badge ${risk.class}" style="font-size:10px; padding:2px 6px;">${risk.text}</span></div>`;
-        }).join('');
-    }
+function getSpecies(id) { return SPECIES.find(s => s.id === id) || SPECIES[0]; }
 
-    function selectPond(pondId) {
-        currentPond = pondId;
-        renderPondSelector();
+function fmtMoney(v) {
+    return '$' + Math.round(v).toLocaleString('es-EC');
+}
+
+function toast(msg, type) {
+    const icons = { ok: '✅', err: '❌', info: 'ℹ️' };
+    const el = document.createElement('div');
+    el.className = 'toast ' + (type || 'info');
+    el.innerHTML = '<span>' + (icons[type] || 'ℹ️') + '</span><span>' + msg + '</span>';
+    document.getElementById('toasts').appendChild(el);
+    setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .4s'; setTimeout(() => el.remove(), 450); }, 4200);
+}
+
+function getRiskLevel(prob) {
+    if (prob >= 0.75) return { label: 'crítico', cls: 'badge-critico', text: 'Crítico', kpi: 'red' };
+    if (prob >= 0.5) return { label: 'alto', cls: 'badge-alto', text: 'Alto', kpi: 'red' };
+    if (prob >= 0.25) return { label: 'medio', cls: 'badge-medio', text: 'Medio', kpi: 'amber' };
+    return { label: 'bajo', cls: 'badge-bajo', text: 'Bajo', kpi: 'green' };
+}
+
+function sensorStatus(species, sensor, value) {
+    const r = species.rangos[sensor];
+    if (!r) return { cls: 's-ok', text: 'Normal' };
+    if (value >= r.ok[0] && value <= r.ok[1]) return { cls: 's-ok', text: 'Normal' };
+    if (value >= r.warn[0] && value <= r.warn[1]) return { cls: 's-warn', text: 'Alerta' };
+    return { cls: 's-alert', text: 'Crítico' };
+}
+
+// ============================================================
+// GENERACIÓN DE ESTADO SIMULADO DE PISCINAS
+// ============================================================
+function generatePondState(pondId) {
+    const r = Math.random();
+    let baseRisk;
+    if (pondId === 'P-003' || pondId === 'P-008') baseRisk = rand(0.75, 0.92);
+    else if (pondId === 'P-001' || pondId === 'P-006' || pondId === 'P-012') baseRisk = rand(0.4, 0.65);
+    else baseRisk = rand(0.05, 0.3);
+
+    const risk = Math.min(1, baseRisk + rand(-0.05, 0.05));
+    const mortality = risk > 0.7 ? rand(8, 18) : risk > 0.4 ? rand(3, 8) : rand(0.5, 3);
+    const density = Math.floor(rand(60, 110));
+    const days = Math.floor(rand(20, 110));
+
+    const ph = risk > 0.6 ? rand(6.0, 6.8) : rand(7.2, 8.4);
+    const doLevel = risk > 0.6 ? rand(2.0, 3.5) : rand(4.5, 7.5);
+    const salinity = rand(28, 38);
+    const turbidity = risk > 0.5 ? rand(60, 120) : rand(10, 45);
+    const temp = rand(26, 32);
+    const ammonia = risk > 0.6 ? rand(1.5, 4.5) : rand(0.05, 1.0);
+    const feed = density * 0.05 * rand(0.8, 1.2);
+    const growth = days * 0.2;
+
+    return { pondId, risk, mortality, density, days, sensors: { ph, do: doLevel, salinity, turbidity, temp, ammonia, feed, growth } };
+}
+
+function initPondStates() {
+    ALL_PONDS.forEach(p => { state.pondStates[p.pondId] = generatePondState(p.pondId); });
+}
+
+// ============================================================
+// ESPECIES — selector y catálogo
+// ============================================================
+function initSpeciesSelect() {
+    const sel = document.getElementById('speciesSelect');
+    sel.innerHTML = SPECIES.map(s => '<option value="' + s.id + '"' + (s.id === state.species ? ' selected' : '') + '>' + s.emoji + ' ' + s.nombre + '</option>').join('');
+    sel.onchange = function () {
+        state.species = this.value;
+        toast('Especie cambiada a <b>' + getSpecies(state.species).nombre + '</b> — umbrales ajustados', 'ok');
+        if (state.imported) { applyImportedToPonds(); }
         updateMonitorTab();
+        renderSpeciesTab();
+        renderActions();
+    };
+}
+
+function renderSpeciesTab() {
+    const grid = document.getElementById('speciesGrid');
+    grid.innerHTML = SPECIES.map(s => {
+        const sel = s.id === state.species;
+        const tag = s.id === 'vannamei' ? '<span class="badge badge-species species-tag">🇪🇨 Nacional</span>' : '<span class="badge badge-info species-tag">Extrapolación</span>';
+        return '<div class="species-card' + (sel ? ' selected' : '') + '" onclick="selectSpecies(\'' + s.id + '\')">' +
+            tag +
+            '<div class="species-emoji">' + s.emoji + '</div>' +
+            '<div class="species-name">' + s.nombre + '</div>' +
+            '<div class="species-latin">' + s.cientifico + '</div>' +
+            '<div class="species-detail">' + s.detalle + '</div>' +
+            '<div class="species-params">' +
+            '<span>🌡️ Temp: <b>' + s.rangos.temperature.ok[0] + '–' + s.rangos.temperature.ok[1] + ' °C</b></span>' +
+            '<span>💨 O₂: <b>' + s.rangos.dissolved_oxygen.ok[0] + '–' + s.rangos.dissolved_oxygen.ok[1] + ' mg/L</b></span>' +
+            '<span>🧂 Salinidad: <b>' + s.rangos.salinity.ok[0] + '–' + s.rangos.salinity.ok[1] + ' ppt</b></span>' +
+            '<span>⚠️ Amonio máx: <b>' + s.rangos.ammonia.ok[1] + ' mg/L</b></span>' +
+            '<span>📈 Crecimiento: <b>' + s.crecimiento + ' g/día</b></span>' +
+            '<span>💲 Precio: <b>$' + s.precio_usd_kg + '/kg</b></span>' +
+            '</div></div>';
+    }).join('');
+
+    // Params table
+    const sp = getSpecies(state.species);
+    const labels = {
+        ph: 'pH', dissolved_oxygen: 'Oxígeno disuelto (mg/L)', salinity: 'Salinidad (ppt)',
+        turbidity: 'Turbidez (NTU)', temperature: 'Temperatura (°C)', ammonia: 'Amonio (mg/L)'
+    };
+    document.getElementById('speciesParamsBody').innerHTML = Object.keys(labels).map(k => {
+        const r = sp.rangos[k];
+        return '<tr><td><b>' + labels[k] + '</b></td><td>' + r.ok[0] + ' – ' + r.ok[1] + '</td><td>' + r.warn[0] + ' – ' + r.warn[1] + '</td><td>' + (r.ok[0] < r.warn[0] ? '< ' + r.ok[0] + ' o > ' + r.ok[1] : '') + '</td></tr>';
+    }).join('');
+
+    // Grades table
+    document.getElementById('gradesBody').innerHTML = sp.tallas.map(t =>
+        '<tr><td><b>' + t.talla + '</b></td><td>' + t.g + '</td><td>' + t.uso + '</td></tr>'
+    ).join('');
+
+    // Growth chart
+    renderGrowthChart(sp);
+}
+
+function selectSpecies(id) {
+    state.species = id;
+    document.getElementById('speciesSelect').value = id;
+    if (state.imported) { applyImportedToPonds(); }
+    updateMonitorTab();
+    renderSpeciesTab();
+    renderActions();
+    toast('Especie seleccionada: ' + getSpecies(id).nombre, 'ok');
+}
+
+function renderGrowthChart(sp) {
+    const days = [];
+    const abw = [];
+    for (let d = 0; d <= sp.ciclo; d += 5) {
+        days.push('D' + d);
+        abw.push(+(sp.crecimiento * d).toFixed(1));
     }
+    const harvest = [];
+    days.forEach(d => harvest.push(d.startsWith('D' + sp.ciclo) ? 1 : 0));
 
-    // ============================================
-    // MONITOR TAB
-    // ============================================
-    function updateMonitorTab() {
-        const state = pondStates[currentPond];
-        if (!state) return;
-
-        // KPIs
-        const risk = getRiskLevel(state.risk);
-        document.getElementById('kpiRiskValue').innerHTML = (state.risk * 100).toFixed(1) + '<span class="kpi-unit">%</span>';
-        document.getElementById('kpiRisk').className = 'kpi-card ' + (risk.label === 'crítico' ? 'red' : risk.label === 'alto' ? 'yellow' : risk.label === 'medio' ? 'yellow' : 'green');
-        document.getElementById('kpiRiskTrend').innerHTML = state.risk > 0.5 ? '<span class="kpi-trend down">↑ ' + rand(2,8).toFixed(1) + '% vs ayer</span>' : '<span class="kpi-trend up">↓ ' + rand(1,5).toFixed(1) + '% vs ayer</span>';
-
-        document.getElementById('kpiMortalityValue').innerHTML = state.mortality.toFixed(1) + '<span class="kpi-unit">%</span>';
-        document.getElementById('kpiDensityValue').innerHTML = state.density + '<span class="kpi-unit"> ind/m²</span>';
-        document.getElementById('kpiDaysValue').innerHTML = state.days + '<span class="kpi-unit"> días</span>';
-
-        // Sensors
-        const s = state.sensors;
-        const sensors = [
-            { id: 'Ph', val: s.ph.toFixed(2), status: getSensorStatus('ph', s.ph) },
-            { id: 'Do', val: s.do.toFixed(1), status: getSensorStatus('do', s.do) },
-            { id: 'Sal', val: s.salinity.toFixed(0), status: getSensorStatus('salinity', s.salinity) },
-            { id: 'Turb', val: s.turbidity.toFixed(0), status: getSensorStatus('turbidity', s.turbidity) },
-            { id: 'Temp', val: s.temp.toFixed(1), status: getSensorStatus('temp', s.temp) },
-            { id: 'Nh3', val: s.ammonia.toFixed(2), status: getSensorStatus('ammonia', s.ammonia) },
-            { id: 'Feed', val: s.feed.toFixed(1), status: { class: 'sensor-ok', text: 'Normal' } },
-            { id: 'Growth', val: s.growth.toFixed(1), status: { class: 'sensor-ok', text: 'Normal' } },
-        ];
-        sensors.forEach(sen => {
-            document.getElementById('sensor' + sen.id).textContent = sen.val;
-            const statusEl = document.getElementById('sensor' + sen.id + 'Status');
-            statusEl.className = 'sensor-status ' + sen.status.class;
-            statusEl.textContent = sen.status.text;
-        });
-
-        // Alert banner
-        const banner = document.getElementById('alertBanner');
-        if (state.risk > 0.7) {
-            banner.style.display = 'flex';
-            document.getElementById('alertTitle').textContent = 'Alerta de Riesgo ' + risk.text;
-            document.getElementById('alertDesc').textContent = 'Piscina ' + currentPond + ' presenta probabilidad de brote del ' + (state.risk * 100).toFixed(0) + '%. Se recomienda acción inmediata.';
-        } else {
-            banner.style.display = 'none';
+    Plotly.react('chartGrowth', [
+        {
+            x: days, y: abw, type: 'scatter', mode: 'lines',
+            line: { color: '#0ea5e9', width: 3 },
+            fill: 'tozeroy', fillcolor: 'rgba(14,165,233,.08)',
+            name: 'Peso corporal (g)'
         }
+    ], {
+        paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+        font: { color: '#475569', size: 12 },
+        margin: { t: 10, b: 50, l: 60, r: 30 },
+        xaxis: { gridcolor: '#e2e8f0', title: 'Días de cultivo' },
+        yaxis: { gridcolor: '#e2e8f0', title: 'ABW (g)', rangemode: 'tozero' },
+        shapes: [{
+            type: 'rect', x0: days[0], x1: days[days.length - 1],
+            y0: 0, y1: Math.max.apply(null, abw),
+            fillcolor: 'rgba(34,197,94,.06)', line: { width: 0 }
+        }],
+        annotations: [{
+            x: days[days.length - 1], y: abw[abw.length - 1],
+            text: 'Cosecha: ' + sp.talla_cosecha,
+            showarrow: true, arrowhead: 2, ax: -80, ay: -30,
+            font: { size: 12, color: '#15803d' }
+        }],
+        showlegend: false
+    }, { responsive: true });
+}
 
-        // Charts
-        renderSensorTimeChart(s);
-        renderOutbreakProbChart(state.risk);
+// ============================================================
+// PESTAÑAS
+// ============================================================
+function switchTab(tab, el) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    if (el) { el.classList.add('active'); } else {
+        const idx = ['monitor', 'import', 'species', 'risk', 'actions', 'economic'].indexOf(tab);
+        const tabs = document.querySelectorAll('.nav-tab');
+        if (tabs[idx]) tabs[idx].classList.add('active');
     }
+    if (tab === 'risk') renderRiskMap();
+    if (tab === 'actions') renderActions();
+    if (tab === 'economic') initEconomicTab();
+    if (tab === 'species') renderSpeciesTab();
+}
 
-    function renderSensorTimeChart(sensors) {
-        const hours = [];
-        const phData = [], doData = [], tempData = [], ammoniaData = [];
-        for (let h = 23; h >= 0; h--) {
-            hours.push(h + ':00');
-            phData.push(+(sensors.ph + rand(-0.3, 0.3)).toFixed(2));
-            doData.push(+(sensors.do + rand(-0.8, 0.8)).toFixed(1));
-            tempData.push(+(sensors.temp + rand(-1.0, 1.0)).toFixed(1));
-            ammoniaData.push(+(sensors.ammonia + rand(-0.2, 0.3)).toFixed(2));
-        }
+// ============================================================
+// MONITOREO
+// ============================================================
+function renderPondSelector() {
+    const container = document.getElementById('pondSelector');
+    container.innerHTML = ALL_PONDS.map(p => {
+        const st = state.pondStates[p.pondId];
+        const risk = getRiskLevel(st.risk);
+        return '<div class="pond-chip' + (p.pondId === state.currentPond ? ' active' : '') + '" onclick="selectPond(\'' + p.pondId + '\')">' + p.pondId + ' <span class="badge ' + risk.cls + '" style="font-size:9.5px;padding:1px 7px;">' + risk.text + '</span></div>';
+    }).join('');
+}
 
-        const traces = [
-            { x: hours, y: phData, name: 'pH', yaxis: 'y1', line: { color: '#42a5f5' } },
-            { x: hours, y: doData, name: 'O₂ (mg/L)', yaxis: 'y2', line: { color: '#66bb6a' } },
-            { x: hours, y: tempData, name: 'Temp (°C)', yaxis: 'y3', line: { color: '#ffa726' } },
-            { x: hours, y: ammoniaData, name: 'NH₃ (mg/L)', yaxis: 'y4', line: { color: '#ef5350' } },
-        ];
-
-        Plotly.react('chartSensorTime', traces, {
-            paper_bgcolor: 'transparent',
-            plot_bgcolor: 'transparent',
-            font: { color: '#90caf9', size: 11 },
-            margin: { t: 10, b: 40, l: 50, r: 50 },
-            xaxis: { gridcolor: '#1e4976', title: 'Hora' },
-            yaxis: { gridcolor: '#1e4976', title: 'pH', side: 'left' },
-            yaxis2: { gridcolor: '#1e4976', title: 'O₂', side: 'right', overlaying: 'y' },
-            yaxis3: { title: '°C', side: 'right', overlaying: 'y', anchor: 'free', autoshift: true },
-            yaxis4: { title: 'NH₃', side: 'right', overlaying: 'y', anchor: 'free', autoshift: true, shift: 40 },
-            legend: { orientation: 'h', y: -0.25 },
-            showlegend: true,
-        }, { responsive: true });
-    }
-
-    function renderOutbreakProbChart(currentRisk) {
-        const days = [];
-        const probs = [];
-        for (let d = 6; d >= 0; d--) {
-            days.push('D-' + d);
-            probs.push(+(Math.max(0.02, Math.min(0.98, currentRisk + rand(-0.15, 0.05) - d * 0.02))).toFixed(3));
-        }
-        days.push('Hoy');
-        probs.push(currentRisk);
-
-        const trace = {
-            x: days, y: probs,
-            type: 'scatter', mode: 'lines+markers',
-            line: { color: '#ef5350', width: 3 },
-            fill: 'tozeroy', fillcolor: 'rgba(239,83,80,0.1)',
-            marker: { size: 8 },
-        };
-
-        const threshold = {
-            x: days, y: Array(days.length).fill(0.5),
-            type: 'scatter', mode: 'lines',
-            line: { color: '#ffa726', dash: 'dash', width: 2 },
-            name: 'Umbral (50%)',
-        };
-
-        Plotly.react('chartOutbreakProb', [trace, threshold], {
-            paper_bgcolor: 'transparent',
-            plot_bgcolor: 'transparent',
-            font: { color: '#90caf9', size: 11 },
-            margin: { t: 10, b: 40, l: 50, r: 30 },
-            xaxis: { gridcolor: '#1e4976' },
-            yaxis: { gridcolor: '#1e4976', title: 'Probabilidad', range: [0, 1] },
-            legend: { orientation: 'h', y: -0.2 },
-        }, { responsive: true });
-    }
-
-    function dismissAlert() {
-        document.getElementById('alertBanner').style.display = 'none';
-    }
-
-    // ============================================
-    // RISK MAP TAB
-    // ============================================
-    function renderRiskMap() {
-        const container = document.getElementById('farmRiskMap');
-        container.innerHTML = FARMS.map(farm => {
-            const pondCards = farm.ponds.map(pid => {
-                const state = pondStates[pid];
-                const risk = getRiskLevel(state.risk);
-                return `<div class="farm-pond risk-${risk.label}" onclick="selectPond('${pid}'); switchTabToMonitor();">
-                    <div style="font-size: 14px; font-weight: 600; margin-bottom: 6px;">${pid}</div>
-                    <div style="font-size: 28px; font-weight: 700; color: var(--accent-${risk.label === 'bajo' ? 'green' : risk.label === 'medio' ? 'yellow' : risk.label === 'alto' ? 'orange' : 'red'});">
-                        ${(state.risk * 100).toFixed(0)}%
-                    </div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Riesgo ${risk.text}</div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Mortalidad: ${state.mortality.toFixed(1)}%</div>
-                </div>`;
-            }).join('');
-            return `<div style="grid-column: 1 / -1; font-size: 16px; font-weight: 600; margin-top: 12px; margin-bottom: 4px; color: var(--text-secondary);">${farm.name} (${farm.id})</div>${pondCards}`;
-        }).join('');
-
-        // Risk distribution chart
-        const farmNames = FARMS.map(f => f.name);
-        const lowCounts = FARMS.map(f => f.ponds.filter(p => pondStates[p].risk < 0.25).length);
-        const medCounts = FARMS.map(f => f.ponds.filter(p => pondStates[p].risk >= 0.25 && pondStates[p].risk < 0.5).length);
-        const highCounts = FARMS.map(f => f.ponds.filter(p => pondStates[p].risk >= 0.5 && pondStates[p].risk < 0.75).length);
-        const critCounts = FARMS.map(f => f.ponds.filter(p => pondStates[p].risk >= 0.75).length);
-
-        Plotly.react('chartRiskDist', [
-            { x: farmNames, y: lowCounts, name: 'Bajo', type: 'bar', marker: { color: '#66bb6a' } },
-            { x: farmNames, y: medCounts, name: 'Medio', type: 'bar', marker: { color: '#ffa726' } },
-            { x: farmNames, y: highCounts, name: 'Alto', type: 'bar', marker: { color: '#ff7043' } },
-            { x: farmNames, y: critCounts, name: 'Crítico', type: 'bar', marker: { color: '#ef5350' } },
-        ], {
-            paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
-            font: { color: '#90caf9', size: 11 },
-            barmode: 'stack',
-            margin: { t: 10, b: 40, l: 50, r: 30 },
-            xaxis: { gridcolor: '#1e4976' },
-            yaxis: { gridcolor: '#1e4976', title: 'N° de Piscinas', dtick: 1 },
-            legend: { orientation: 'h', y: -0.2 },
-        }, { responsive: true });
-    }
-
-    function refreshRiskMap() {
-        // Re-generate pond states with new random
-        Object.keys(pondStates).forEach(pid => { pondStates[pid] = generatePondState(pid); });
-        renderRiskMap();
-        renderPondSelector();
-        updateMonitorTab();
-    }
-
-    function switchTabToMonitor() {
-        document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
-        document.getElementById('tab-monitor').classList.add('active');
-        document.querySelectorAll('.nav-tab')[0].classList.add('active');
-        updateMonitorTab();
-    }
-
-    // ============================================
-    // ACTIONS TAB
-    // ============================================
-    function renderActions() {
-        const state = pondStates[currentPond];
-        if (!state) return;
-
-        // Determine recommended action
-        let recommendedId = 0;
-        let confidence = 0;
-        let reasoning = '';
-
-        if (state.risk > 0.7 && state.sensors.ammonia > 2.0) {
-            recommendedId = 3; confidence = 0.92;
-            reasoning = 'Probabilidad de brote crítica con niveles altos de amonio. El tratamiento químico reduce directamente la carga patogénica.';
-        } else if (state.risk > 0.7) {
-            recommendedId = 4; confidence = 0.85;
-            reasoning = 'Riesgo crítico sin causa única identificable. Reducir densidad disminuye el estrés y la transmisión.';
-        } else if (state.risk > 0.5 && state.sensors.turbidity > 50) {
-            recommendedId = 1; confidence = 0.78;
-            reasoning = 'Turbidez elevada con riesgo alto. El intercambio de agua mejora la calidad rápidamente.';
-        } else if (state.risk > 0.5 && state.sensors.ammonia > 1.5) {
-            recommendedId = 1; confidence = 0.75;
-            reasoning = 'Amonio elevado con riesgo alto. Se recomienda aumentar el flujo de agua para diluir.';
-        } else if (state.risk > 0.3 && state.density > 80) {
-            recommendedId = 4; confidence = 0.62;
-            reasoning = 'Densidad alta con riesgo moderado. Reducir densidad previene estrés futuro.';
-        } else if (state.risk > 0.3 && state.sensors.feed > 4) {
-            recommendedId = 2; confidence = 0.58;
-            reasoning = 'Alimentación elevada con riesgo moderado. Reducir 20% disminuye exceso de nutrientes.';
-        } else {
-            recommendedId = 0; confidence = 0.45;
-            reasoning = 'Condiciones estables. Mantener monitoreo continuo y protocolos de bioseguridad estándar.';
-        }
-
-        // Confidence badge
-        const confBadge = document.getElementById('recommendationConfidence');
-        const confLevel = confidence > 0.8 ? { class: 'risk-bajo', text: 'Alta' } : confidence > 0.6 ? { class: 'risk-medio', text: 'Media' } : { class: 'risk-alto', text: 'Baja' };
-        confBadge.className = 'risk-badge ' + confLevel.class;
-        confBadge.textContent = 'Confianza: ' + confLevel.text + ' (' + (confidence * 100).toFixed(0) + '%)';
-
-        // Action list
-        const actionList = document.getElementById('actionList');
-        actionList.innerHTML = ACTIONS.map(a => {
-            const isRec = a.id === recommendedId;
-            return `<div class="action-item ${isRec ? 'recommended' : ''}" onclick="showActionDetail(${a.id}, ${recommendedId}, '${reasoning.replace(/'/g, "\\'")}', ${confidence})">
-                <span class="action-icon">${a.icon}</span>
-                <div class="action-info">
-                    <div class="action-name">${a.name}${isRec ? ' ⭐' : ''}</div>
-                    <div class="action-desc">${a.desc}</div>
-                </div>
-                <div class="action-cost">$${a.cost}${a.costUnit}</div>
-            </div>`;
-        }).join('');
-
-        // Auto-show detail for recommended
-        showActionDetail(recommendedId, recommendedId, reasoning, confidence);
-
-        // Action history chart
-        renderActionHistoryChart();
-    }
-
-    function showActionDetail(actionId, recommendedId, reasoning, confidence) {
-        const action = ACTIONS[actionId];
-        const state = pondStates[currentPond];
-        const isRec = actionId === recommendedId;
-
-        // Economic estimate
-        const duration = 7;
-        const actionCost = action.cost > 0 ? action.cost * (action.costUnit.includes('día') ? duration : 1) : Math.abs(action.cost) * duration;
-        const mortalityReduction = isRec ? rand(3, 12) : rand(0, 4);
-        const lossesAvoided = mortalityReduction * state.density * 1000 * 0.012; // rough estimate
-        const netBenefit = lossesAvoided - actionCost;
-        const roi = actionCost > 0 ? (netBenefit / actionCost * 100) : 0;
-
-        document.getElementById('actionDetail').innerHTML = `
-            <div style="text-align: center; margin-bottom: 20px;">
-                <div style="font-size: 48px;">${action.icon}</div>
-                <div style="font-size: 18px; font-weight: 600; margin-top: 8px;">${action.name}</div>
-                ${isRec ? '<div class="risk-badge risk-bajo" style="margin-top: 8px;">⭐ Acción Recomendada</div>' : ''}
-            </div>
-            <div style="background: var(--bg-secondary); border-radius: 8px; padding: 14px; margin-bottom: 12px;">
-                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">JUSTIFICACIÓN</div>
-                <div style="font-size: 13px;">${reasoning}</div>
-            </div>
-            <div class="grid-2" style="gap: 10px;">
-                <div style="background: var(--bg-secondary); border-radius: 8px; padding: 12px; text-align: center;">
-                    <div style="font-size: 11px; color: var(--text-muted);">Costo Estimado (7 días)</div>
-                    <div style="font-size: 20px; font-weight: 700; color: var(--accent-yellow);">$${actionCost.toFixed(0)}</div>
-                </div>
-                <div style="background: var(--bg-secondary); border-radius: 8px; padding: 12px; text-align: center;">
-                    <div style="font-size: 11px; color: var(--text-muted);">Pérdidas Evitadas</div>
-                    <div style="font-size: 20px; font-weight: 700; color: var(--accent-green);">$${lossesAvoided.toFixed(0)}</div>
-                </div>
-                <div style="background: var(--bg-secondary); border-radius: 8px; padding: 12px; text-align: center;">
-                    <div style="font-size: 11px; color: var(--text-muted);">Beneficio Neto</div>
-                    <div style="font-size: 20px; font-weight: 700; color: ${netBenefit >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'};">$${netBenefit.toFixed(0)}</div>
-                </div>
-                <div style="background: var(--bg-secondary); border-radius: 8px; padding: 12px; text-align: center;">
-                    <div style="font-size: 11px; color: var(--text-muted);">ROI</div>
-                    <div style="font-size: 20px; font-weight: 700; color: ${roi >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'};">${roi.toFixed(0)}%</div>
-                </div>
-            </div>
-            <div style="margin-top: 14px; font-size: 12px; color: var(--text-muted);">
-                <strong>Piscina:</strong> ${currentPond} | <strong>Prob. brote actual:</strong> ${(state.risk * 100).toFixed(1)}% | <strong>Confianza:</strong> ${(confidence * 100).toFixed(0)}%
-            </div>
-        `;
-    }
-
-    function renderActionHistoryChart() {
-        const days = [];
-        const actions = [];
-        const actionNames = ['Sin acción', 'Flujo agua', 'Alimentación', 'Tratamiento', 'Reducir densidad'];
-        for (let d = 29; d >= 0; d--) {
-            days.push('D-' + d);
-            actions.push(Math.floor(rand(0, 5)));
-        }
-
-        Plotly.react('chartActionHistory', [{
-            x: days,
-            y: actions,
-            type: 'scatter',
-            mode: 'markers',
-            marker: { size: 10, color: actions.map(a => ['#42a5f5', '#26c6da', '#66bb6a', '#ffa726', '#ef5350'][a]) },
-            text: actions.map(a => actionNames[a]),
-        }], {
-            paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
-            font: { color: '#90caf9', size: 11 },
-            margin: { t: 10, b: 40, l: 50, r: 30 },
-            xaxis: { gridcolor: '#1e4976' },
-            yaxis: { gridcolor: '#1e4976', title: 'Acción', tickvals: [0,1,2,3,4], ticktext: actionNames, dtick: 1 },
-        }, { responsive: true });
-    }
-
-    // ============================================
-    // ECONOMIC SIMULATOR TAB
-    // ============================================
-    function initEconomicTab() {
-        const select = document.getElementById('simPond');
-        select.innerHTML = ALL_PONDS.map(p => `<option value="${p.pondId}" ${p.pondId === currentPond ? 'selected' : ''}>${p.pondId} — ${p.farmName}</option>`).join('');
-        renderPolicyComparison();
-        renderEconProjection();
-    }
-
-    function runSimulation() {
-        const pondId = document.getElementById('simPond').value;
-        const actionId = parseInt(document.getElementById('simAction').value);
-        const duration = parseInt(document.getElementById('simDuration').value);
-        const state = pondStates[pondId];
-        const action = ACTIONS[actionId];
-
-        const actionCost = action.cost > 0 ? action.cost * (action.costUnit.includes('día') ? duration : 1) : Math.abs(action.cost) * duration;
-        const baseMortality = state.mortality;
-        const mortalityReduction = actionId === 3 ? rand(5, 15) : actionId === 4 ? rand(4, 10) : actionId === 1 ? rand(2, 6) : actionId === 2 ? rand(1, 3) : 0;
-        const newMortality = Math.max(0.5, baseMortality - mortalityReduction);
-        const lossesAvoided = mortalityReduction * state.density * 1000 * 0.012 * (duration / 30);
-        const netBenefit = lossesAvoided - actionCost;
-        const roi = actionCost > 0 ? (netBenefit / actionCost * 100) : 0;
-
-        document.getElementById('simLossValue').textContent = '$' + lossesAvoided.toLocaleString('es', { maximumFractionDigits: 0 });
-        document.getElementById('simCostValue').textContent = '$' + actionCost.toLocaleString('es', { maximumFractionDigits: 0 });
-        document.getElementById('simNetValue').textContent = '$' + netBenefit.toLocaleString('es', { maximumFractionDigits: 0 });
-        document.getElementById('simNetValue').style.color = netBenefit >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
-        document.getElementById('simROIValue').innerHTML = roi.toFixed(1) + '<span class="kpi-unit">%</span>';
-        document.getElementById('simROIValue').style.color = roi >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
-
-        renderPolicyComparison();
-        renderEconProjection();
-    }
-
-    function renderPolicyComparison() {
-        const pondId = document.getElementById('simPond')?.value || currentPond;
-        const state = pondStates[pondId];
-        const duration = parseInt(document.getElementById('simDuration')?.value || 30);
-
-        const results = ACTIONS.map(a => {
-            const cost = a.cost > 0 ? a.cost * (a.costUnit.includes('día') ? duration : 1) : Math.abs(a.cost) * duration;
-            const mortRed = a.id === 3 ? rand(5,15) : a.id === 4 ? rand(4,10) : a.id === 1 ? rand(2,6) : a.id === 2 ? rand(1,3) : 0;
-            const finalMort = Math.max(0.5, state.mortality - mortRed);
-            const lossesAvoided = mortRed * state.density * 1000 * 0.012 * (duration / 30);
-            const net = lossesAvoided - cost;
-            const roi = cost > 0 ? (net / cost * 100) : 0;
-            return { name: a.name, cost, lossesAvoided, net, roi, finalMort };
-        });
-
-        const tbody = document.getElementById('policyTableBody');
-        tbody.innerHTML = results.map(r => `<tr>
-            <td>${r.name}</td>
-            <td>$${r.cost.toLocaleString('es', { maximumFractionDigits: 0 })}</td>
-            <td>$${r.lossesAvoided.toLocaleString('es', { maximumFractionDigits: 0 })}</td>
-            <td class="${r.net >= 0 ? 'profit-positive' : 'profit-negative'}">$${r.net.toLocaleString('es', { maximumFractionDigits: 0 })}</td>
-            <td class="${r.roi >= 0 ? 'profit-positive' : 'profit-negative'}">${r.roi.toFixed(1)}%</td>
-            <td>${r.finalMort.toFixed(1)}%</td>
-        </tr>`).join('');
-    }
-
-    function renderEconProjection() {
-        const days = [];
-        for (let d = 0; d <= 120; d += 10) days.push('D' + d);
-
-        const traces = ACTIONS.map((a, i) => {
-            const data = days.map((_, idx) => {
-                const baseProfit = 50000 - idx * 300;
-                const actionCost = a.cost > 0 ? a.cost * (a.costUnit.includes('día') ? idx * 10 : 1) : Math.abs(a.cost) * idx * 10;
-                const savings = (i === 3 ? 8000 : i === 4 ? 6000 : i === 1 ? 3000 : i === 2 ? 1500 : 0) * idx;
-                return baseProfit - actionCost + savings;
-            });
-            return { x: days, y: data, name: a.name, type: 'scatter', mode: 'lines', line: { width: 2 } };
-        });
-
-        Plotly.react('chartEconProjection', traces, {
-            paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
-            font: { color: '#90caf9', size: 11 },
-            margin: { t: 10, b: 40, l: 60, r: 30 },
-            xaxis: { gridcolor: '#1e4976', title: 'Días de cultivo' },
-            yaxis: { gridcolor: '#1e4976', title: 'Ganancia Neta ($)' },
-            legend: { orientation: 'h', y: -0.2 },
-        }, { responsive: true });
-    }
-
-    // ============================================
-    // INIT
-    // ============================================
-    initPondStates();
+function selectPond(pondId) {
+    state.currentPond = pondId;
     renderPondSelector();
     updateMonitorTab();
-    </script>
+}
+
+function updateMonitorTab() {
+    const sp = getSpecies(state.species);
+    const st = state.pondStates[state.currentPond];
+    if (!st) return;
+
+    const risk = getRiskLevel(st.risk);
+    document.getElementById('kpiRisk').className = 'kpi ' + risk.kpi;
+    document.getElementById('kpiRiskValue').innerHTML = (st.risk * 100).toFixed(1) + '<span class="kpi-unit">%</span>';
+    document.getElementById('kpiRiskTrend').innerHTML = st.risk > 0.5 ? '<span class="down">▲ +' + rand(2, 8).toFixed(1) + '% vs ayer</span>' : '<span class="up">▼ -' + rand(1, 5).toFixed(1) + '% vs ayer</span>';
+
+    document.getElementById('kpiMortalityValue').innerHTML = st.mortality.toFixed(1) + '<span class="kpi-unit">%</span>';
+    document.getElementById('kpiDensityValue').innerHTML = st.density + '<span class="kpi-unit"> ind/m²</span>';
+    document.getElementById('kpiDaysValue').innerHTML = st.days + '<span class="kpi-unit"> días</span>';
+
+    // Sensor grid (species-aware)
+    const s = st.sensors;
+    const defs = [
+        { key: 'ph', icon: '🧪', name: 'pH', val: s.ph.toFixed(2), unit: 'unid.' },
+        { key: 'do', icon: '💨', name: 'Oxígeno Disuelto', val: s.do.toFixed(1), unit: 'mg/L' },
+        { key: 'salinity', icon: '🧂', name: 'Salinidad', val: s.salinity.toFixed(0), unit: 'ppt' },
+        { key: 'turbidity', icon: '🌫️', name: 'Turbidez', val: s.turbidity.toFixed(0), unit: 'NTU' },
+        { key: 'temp', icon: '🌡️', name: 'Temperatura', val: s.temp.toFixed(1), unit: '°C' },
+        { key: 'ammonia', icon: '⚠️', name: 'Amonio', val: s.ammonia.toFixed(2), unit: 'mg/L' },
+        { key: 'feed', icon: '🍽️', name: 'Alimentación', val: s.feed.toFixed(1), unit: 'kg/día' },
+        { key: 'growth', icon: '📈', name: 'Peso (ABW)', val: s.growth.toFixed(1), unit: 'g' }
+    ];
+    const sensorsOf = {
+        ph: 'ph', do: 'dissolved_oxygen', salinity: 'salinity', turbidity: 'turbidity',
+        temp: 'temperature', ammonia: 'ammonia', feed: null, growth: null
+    };
+    document.getElementById('sensorGrid').innerHTML = defs.map(d => {
+        const skey = sensorsOf[d.key];
+        const stt = skey ? sensorStatus(sp, skey, s[d.key]) : { cls: 's-ok', text: 'Normal' };
+        return '<div class="sensor"><div class="sensor-icon">' + d.icon + '</div>' +
+            '<div class="sensor-name">' + d.name + '</div>' +
+            '<div class="sensor-value">' + d.val + ' <span class="sensor-unit">' + d.unit + '</span></div>' +
+            '<div class="sensor-status ' + stt.cls + '">' + stt.text + '</div></div>';
+    }).join('');
+
+    document.getElementById('chartSeriesSpecies').textContent = sp.emoji + ' ' + sp.nombre;
+
+    // Alert banner
+    const banner = document.getElementById('alertBanner');
+    if (st.risk > 0.7) {
+        banner.classList.add('show');
+        document.getElementById('alertTitle').textContent = 'Alerta de Riesgo ' + risk.text;
+        document.getElementById('alertDesc').textContent = 'Piscina ' + state.currentPond + ' (' + sp.nombre + '): probabilidad de brote del ' + (st.risk * 100).toFixed(0) + '%. Se recomienda intervención inmediata.';
+    } else {
+        banner.classList.remove('show');
+    }
+
+    renderSensorTimeChart(s, sp);
+    renderOutbreakProbChart(st.risk);
+}
+
+function renderSensorTimeChart(sensors, sp) {
+    const hours = [];
+    const phData = [], doData = [], tempData = [], ammData = [];
+    for (let h = 23; h >= 0; h--) {
+        hours.push(h + ':00');
+        phData.push(+(sensors.ph + rand(-0.3, 0.3)).toFixed(2));
+        doData.push(+(sensors.do + rand(-0.8, 0.8)).toFixed(1));
+        tempData.push(+(sensors.temp + rand(-1.0, 1.0)).toFixed(1));
+        ammData.push(+(sensors.ammonia + rand(-0.2, 0.3)).toFixed(2));
+    }
+    const ok = sp.rangos;
+    Plotly.react('chartSensorTime', [
+        { x: hours, y: phData, name: 'pH', yaxis: 'y1', line: { color: '#0ea5e9', width: 2 } },
+        { x: hours, y: doData, name: 'O₂ (mg/L)', yaxis: 'y2', line: { color: '#22c55e', width: 2 } },
+        { x: hours, y: tempData, name: 'Temp (°C)', yaxis: 'y3', line: { color: '#f59e0b', width: 2 } },
+        { x: hours, y: ammData, name: 'NH₃ (mg/L)', yaxis: 'y4', line: { color: '#ef4444', width: 2 } }
+    ], {
+        paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+        font: { color: '#64748b', size: 11 },
+        margin: { t: 10, b: 45, l: 50, r: 65 },
+        xaxis: { gridcolor: '#e2e8f0', title: 'Hora' },
+        yaxis: { gridcolor: '#e2e8f0', title: 'pH' },
+        yaxis2: { gridcolor: '#e2e8f0', title: 'O₂', overlaying: 'y', side: 'right' },
+        yaxis3: { title: '°C', overlaying: 'y', side: 'right', anchor: 'free', autoshift: true },
+        yaxis4: { title: 'NH₃', overlaying: 'y', side: 'right', anchor: 'free', autoshift: true, shift: 40 },
+        legend: { orientation: 'h', y: -0.28 },
+        shapes: [
+            { type: 'rect', xref: 'paper', x0: 0, x1: 1, y0: ok.temperature.ok[0], y1: ok.temperature.ok[1], fillcolor: 'rgba(245,158,11,.05)', line: { width: 0 }, layer: 'below' }
+        ]
+    }, { responsive: true });
+}
+
+function renderOutbreakProbChart(currentRisk) {
+    const days = [], probs = [];
+    for (let d = 6; d >= 0; d--) {
+        days.push('D-' + d);
+        probs.push(+(Math.max(0.02, Math.min(0.98, currentRisk + rand(-0.15, 0.05) - d * 0.02))).toFixed(3));
+    }
+    days.push('Hoy');
+    probs.push(currentRisk);
+    Plotly.react('chartOutbreakProb', [
+        {
+            x: days, y: probs, type: 'scatter', mode: 'lines+markers',
+            line: { color: '#ef4444', width: 3 },
+            fill: 'tozeroy', fillcolor: 'rgba(239,68,68,.08)',
+            marker: { size: 7 }
+        },
+        {
+            x: days, y: Array(days.length).fill(0.5), type: 'scatter', mode: 'lines',
+            line: { color: '#f59e0b', dash: 'dash', width: 2 }, name: 'Umbral (50%)'
+        },
+        {
+            x: days, y: Array(days.length).fill(0.75), type: 'scatter', mode: 'lines',
+            line: { color: '#ef4444', dash: 'dot', width: 2 }, name: 'Umbral crítico (75%)'
+        }
+    ], {
+        paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+        font: { color: '#64748b', size: 11 },
+        margin: { t: 10, b: 45, l: 55, r: 30 },
+        xaxis: { gridcolor: '#e2e8f0' },
+        yaxis: { gridcolor: '#e2e8f0', title: 'Probabilidad', range: [0, 1] },
+        legend: { orientation: 'h', y: -0.25 }
+    }, { responsive: true });
+}
+
+function dismissAlert() { document.getElementById('alertBanner').classList.remove('show'); }
+
+// ============================================================
+// IMPORTACIÓN DE DATOS REALES
+// ============================================================
+function downloadTemplate() {
+    const header = 'timestamp,pond_id,ph,dissolved_oxygen,salinity,turbidity,temperature,ammonia,outbreak';
+    const rows = [
+        '2025-06-01 06:00,P-001,7.82,5.21,30.1,24.5,29.1,0.35,0',
+        '2025-06-01 06:15,P-001,7.80,5.10,30.0,25.0,29.0,0.38,0',
+        '2025-06-01 06:30,P-001,7.75,4.90,30.2,27.5,29.3,0.52,0',
+        '2025-06-01 06:45,P-001,7.60,4.20,30.0,34.0,29.8,0.90,0',
+        '2025-06-01 07:00,P-001,7.42,3.60,29.9,48.0,30.1,1.40,1',
+        '2025-06-01 07:15,P-001,7.30,3.10,29.8,62.0,30.4,1.90,1'
+    ];
+    const csv = header + '\n' + rows.join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'plantilla_datos_piscinas.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('Plantilla descargada', 'ok');
+}
+
+function parseCSV(text) {
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+    if (lines.length < 2) throw new Error('El archivo no tiene filas de datos.');
+    const header = lines[0].split(',').map(h => h.trim().replace(/^\ufeff/, ''));
+    const required = ['timestamp', 'pond_id', 'ph', 'dissolved_oxygen', 'salinity', 'turbidity', 'temperature', 'ammonia'];
+    const missing = required.filter(c => !header.includes(c));
+    if (missing.length > 0) throw new Error('Faltan columnas requeridas: ' + missing.join(', '));
+
+    const readings = [];
+    const errors = [];
+    const idx = {};
+    header.forEach((h, i) => idx[h] = i);
+
+    for (let i = 1; i < lines.length; i++) {
+        const parts = lines[i].split(',');
+        const get = (c) => (parts[idx[c]] || '').trim();
+        try {
+            const ts = get('timestamp');
+            const pond = get('pond_id');
+            const ph = parseFloat(get('ph'));
+            const do2 = parseFloat(get('dissolved_oxygen'));
+            const sal = parseFloat(get('salinity'));
+            const turb = parseFloat(get('turbidity'));
+            const temp = parseFloat(get('temperature'));
+            const amm = parseFloat(get('ammonia'));
+            const outb = header.includes('outbreak') ? parseInt(get('outbreak') || '0') : 0;
+            if (!ts || !pond) throw new Error('timestamp/pond_id vacíos');
+            if ([ph, do2, sal, turb, temp, amm].some(v => isNaN(v))) throw new Error('valores numéricos inválidos');
+            if (ph < 0 || ph > 14) throw new Error('pH fuera de rango (0–14)');
+            if (do2 < 0 || do2 > 20) throw new Error('O₂ fuera de rango');
+            if (amm < 0 || amm > 10) throw new Error('Amonio fuera de rango');
+            readings.push({ timestamp: ts, pond_id: pond, ph, dissolved_oxygen: do2, salinity: sal, turbidity: turb, temperature: temp, ammonia: amm, outbreak: outb });
+        } catch (e) {
+            errors.push('Fila ' + (i + 1) + ': ' + e.message);
+        }
+    }
+    return { readings, errors };
+}
+
+function applyImportedData(readings) {
+    const byPond = {};
+    readings.forEach(r => {
+        if (!byPond[r.pond_id]) byPond[r.pond_id] = [];
+        byPond[r.pond_id].push(r);
+    });
+    state.imported = {};
+    Object.keys(byPond).forEach(pid => {
+        const list = byPond[pid].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+        state.imported[pid] = { readings: list, species: state.species };
+    });
+    state.importedCount = readings.length;
+    try { localStorage.setItem('bs_imported', JSON.stringify({ readings, species: state.species })); } catch (e) { /* quota */ }
+    applyImportedToPonds();
+}
+
+function applyImportedToPonds() {
+    if (!state.imported) return;
+    Object.keys(state.imported).forEach(pid => {
+        const rec = state.imported[pid];
+        const last = rec.readings[rec.readings.length - 1];
+        const sp = getSpecies(rec.species || state.species);
+        // Risk based on species thresholds (stress score)
+        const stress = stressScore(sp, last);
+        const risk = Math.min(0.99, 0.1 + stress * 0.22);
+        const mortality = stress >= 4 ? rand(6, 14) : stress >= 2 ? rand(2, 6) : rand(0.5, 2.5);
+        const days = rec.readings.length > 0 ? Math.max(1, Math.floor(rec.readings.length / 96)) : 30;
+        state.pondStates[pid] = {
+            pondId: pid, risk, mortality,
+            density: Math.floor(rand(60, 110)), days,
+            sensors: {
+                ph: last.ph, do: last.dissolved_oxygen, salinity: last.salinity,
+                turbidity: last.turbidity, temp: last.temperature, ammonia: last.ammonia,
+                feed: 3.5, growth: days * sp.crecimiento
+            },
+            imported: true
+        };
+    });
+    const sp2 = getSpecies(state.species);
+    // Keep other ponds but tag species
+    ALL_PONDS.forEach(p => { if (!state.pondStates[p.pondId]) state.pondStates[p.pondId] = generatePondState(p.pondId); });
+    void sp2;
+    updateDataPill();
+}
+
+function stressScore(sp, last) {
+    let s = 0;
+    if (last.ph < sp.rangos.ph.warn[0] || last.ph > sp.rangos.ph.warn[1]) s += 2;
+    if (last.dissolved_oxygen < sp.rangos.dissolved_oxygen.warn[0]) s += 3;
+    if (last.ammonia > sp.rangos.ammonia.warn[1]) s += 3;
+    if (last.temperature > sp.rangos.temperature.warn[1] || last.temperature < sp.rangos.temperature.warn[0]) s += 2;
+    if (last.turbidity > sp.rangos.turbidity.warn[1]) s += 1;
+    if (last.salinity > sp.rangos.salinity.warn[1] || last.salinity < sp.rangos.salinity.warn[0]) s += 1;
+    return s;
+}
+
+function handleCSV(text) {
+    let result;
+    try { result = parseCSV(text); } catch (e) { toast(e.message, 'err'); return; }
+    if (result.readings.length === 0) { toast('No se pudo importar ninguna fila válida.', 'err'); renderImportTable(result.readings, result.errors); return; }
+    applyImportedData(result.readings);
+    renderImportTable(result.readings, result.errors);
+    renderPondSelector();
+    updateMonitorTab();
+    toast('Importados ' + result.readings.length + ' registros de ' + Object.keys(state.imported).length + ' piscinas' + (result.errors.length ? ' · ' + result.errors.length + ' filas descartadas' : ''), result.errors.length ? 'info' : 'ok');
+}
+
+function renderImportTable(readings, errors) {
+    const wrap = document.getElementById('importTableWrap');
+    document.getElementById('importSummary').textContent = (readings ? readings.length : state.importedCount) + ' registros';
+    if (!readings || readings.length === 0) {
+        if (errors && errors.length) {
+            wrap.innerHTML = '<div class="empty"><div class="big">⚠️</div><b>Filas descartadas:</b><br>' + errors.slice(0, 8).map(e => e + '<br>').join('') + (errors.length > 8 ? '… y ' + (errors.length - 8) + ' más' : '') + '</div>';
+        } else {
+            wrap.innerHTML = '<div class="empty"><div class="big">📭</div>Aún no hay datos importados.</div>';
+        }
+        return;
+    }
+    const cols = ['timestamp', 'pond_id', 'ph', 'dissolved_oxygen', 'salinity', 'turbidity', 'temperature', 'ammonia', 'outbreak'];
+    const head = '<thead><tr>' + cols.map(c => '<th>' + c + '</th>').join('') + '</tr></thead>';
+    const bodyRows = readings.slice(0, 15).map(r => '<tr>' + cols.map(c => '<td>' + (r[c] !== undefined ? r[c] : '') + '</td>').join('') + '</tr>').join('');
+    const extra = readings.length > 15 ? '<tr><td colspan="9" style="text-align:center;color:var(--ink-muted)">… y ' + (readings.length - 15) + ' filas más</td></tr>' : '';
+    wrap.innerHTML = '<table class="econ">' + head + '<tbody>' + bodyRows + extra + '</tbody></table>';
+    if (errors && errors.length) {
+        wrap.innerHTML += '<div style="margin-top:10px;font-size:12px;color:#b91c1c;"><b>' + errors.length + ' filas descartadas:</b> ' + errors.slice(0, 3).join(' · ') + (errors.length > 3 ? ' …' : '') + '</div>';
+    }
+}
+
+function loadSampleData() {
+    const sample = [
+        { timestamp: '2025-06-01 06:00', pond_id: 'P-001', ph: 7.82, dissolved_oxygen: 5.21, salinity: 30.1, turbidity: 24.5, temperature: 29.1, ammonia: 0.35, outbreak: 0 },
+        { timestamp: '2025-06-01 07:00', pond_id: 'P-001', ph: 7.42, dissolved_oxygen: 3.60, salinity: 29.9, turbidity: 48.0, temperature: 30.1, ammonia: 1.40, outbreak: 1 },
+        { timestamp: '2025-06-01 08:00', pond_id: 'P-001', ph: 7.10, dissolved_oxygen: 2.80, salinity: 29.7, turbidity: 68.0, temperature: 30.6, ammonia: 2.10, outbreak: 1 },
+        { timestamp: '2025-06-01 06:00', pond_id: 'P-006', ph: 7.95, dissolved_oxygen: 5.80, salinity: 31.0, turbidity: 18.0, temperature: 28.6, ammonia: 0.22, outbreak: 0 },
+        { timestamp: '2025-06-01 07:00', pond_id: 'P-006', ph: 7.88, dissolved_oxygen: 5.50, salinity: 31.1, turbidity: 20.5, temperature: 28.8, ammonia: 0.28, outbreak: 0 }
+    ];
+    applyImportedData(sample);
+    renderImportTable(sample, []);
+    renderPondSelector();
+    updateMonitorTab();
+    toast('Datos de ejemplo cargados (2 piscinas)', 'ok');
+}
+
+function clearImportedData() {
+    state.imported = null;
+    state.importedCount = 0;
+    localStorage.removeItem('bs_imported');
+    initPondStates();
+    renderImportTable([], []);
+    renderPondSelector();
+    updateMonitorTab();
+    updateDataPill();
+    toast('Datos importados eliminados. Volviendo a datos simulados.', 'info');
+}
+
+function addManualReading() {
+    const pond = document.getElementById('mPond').value.trim();
+    const ts = document.getElementById('mTs').value;
+    const vals = {
+        ph: parseFloat(document.getElementById('mPh').value),
+        dissolved_oxygen: parseFloat(document.getElementById('mDo').value),
+        salinity: parseFloat(document.getElementById('mSal').value),
+        turbidity: parseFloat(document.getElementById('mTurb').value),
+        temperature: parseFloat(document.getElementById('mTemp').value),
+        ammonia: parseFloat(document.getElementById('mNh3').value)
+    };
+    if (!pond) { toast('Indica el identificador de la piscina', 'err'); return; }
+    if (!ts) { toast('Indica la fecha y hora', 'err'); return; }
+    const keys = ['ph', 'dissolved_oxygen', 'salinity', 'turbidity', 'temperature', 'ammonia'];
+    if (keys.some(k => isNaN(vals[k]))) { toast('Completa todos los sensores con valores numéricos', 'err'); return; }
+    const reading = { timestamp: ts.replace('T', ' '), pond_id: pond, ...vals, outbreak: 0 };
+    const readings = state.imported ? Object.values(state.imported).flatMap(p => p.readings) : [];
+    readings.push(reading);
+    applyImportedData(readings);
+    renderImportTable(readings, []);
+    renderPondSelector();
+    if (state.pondStates[pond]) { state.currentPond = pond; selectPond(pond); } else { updateMonitorTab(); }
+    toast('Lectura guardada para ' + pond, 'ok');
+}
+
+function updateDataPill() {
+    const pill = document.getElementById('pillDataText');
+    const dot = document.getElementById('dotData');
+    if (state.imported) {
+        pill.textContent = 'Fuente: Real (' + state.importedCount + ' registros)';
+        dot.className = 'dot real';
+    } else {
+        pill.textContent = 'Fuente: Simulada';
+        dot.className = 'dot';
+    }
+    document.getElementById('footerData').textContent = state.imported
+        ? 'Fuente: datos reales importados (' + state.importedCount + ' registros) · Modelo AUC 0.986'
+        : 'Fuente: datos simulados · Modelo RandomForest+OCSVM (AUC 0.986)';
+}
+
+function fetchFromApi() {
+    const url = document.getElementById('apiUrl').value.trim();
+    if (!url) { toast('Ingresa la URL base de la API (ej. http://localhost:8000)', 'err'); return; }
+    state.apiUrl = url.replace(/\/$/, '');
+    fetch(state.apiUrl + '/ponds')
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(data => {
+            toast('API conectada: ' + (Array.isArray(data) ? data.length : 'ok'), 'ok');
+        })
+        .catch(e => toast('No se pudo conectar a la API: ' + e.message + '. Verifica CORS y que la API esté corriendo.', 'err'));
+}
+
+// ============================================================
+// MAPA DE RIESGO
+// ============================================================
+function renderRiskMap() {
+    const container = document.getElementById('farmRiskMap');
+    container.innerHTML = FARMS.map(farm => {
+        const cards = farm.ponds.map(pid => {
+            const st = state.pondStates[pid];
+            const risk = getRiskLevel(st.risk);
+            return '<div class="farm-pond ' + risk.label + '" onclick="selectPondFromMap(\'' + pid + '\')">' +
+                '<div class="farm-pond-name">' + pid + ' <span class="badge ' + risk.cls + '">' + risk.text + '</span></div>' +
+                '<div class="farm-pond-risk" style="color:' + (risk.label === 'bajo' ? '#22c55e' : risk.label === 'medio' ? '#f59e0b' : risk.label === 'alto' ? '#f97316' : '#ef4444') + '">' + (st.risk * 100).toFixed(0) + '%</div>' +
+                '<div class="farm-pond-meta">Mortalidad: ' + st.mortality.toFixed(1) + '% · ' + (st.imported ? '📥 datos reales' : 'simulado') + '</div>' +
+                '</div>';
+        }).join('');
+        return '<div class="farm-block">🏭 ' + farm.name + ' <span style="font-weight:600;font-size:11.5px;color:var(--ink-muted)">(' + farm.id + ')</span></div>' + cards;
+    }).join('');
+
+    const farmNames = FARMS.map(f => f.name);
+    const lowC = FARMS.map(f => f.ponds.filter(p => state.pondStates[p].risk < 0.25).length);
+    const medC = FARMS.map(f => f.ponds.filter(p => state.pondStates[p].risk >= 0.25 && state.pondStates[p].risk < 0.5).length);
+    const highC = FARMS.map(f => f.ponds.filter(p => state.pondStates[p].risk >= 0.5 && state.pondStates[p].risk < 0.75).length);
+    const critC = FARMS.map(f => f.ponds.filter(p => state.pondStates[p].risk >= 0.75).length);
+
+    Plotly.react('chartRiskDist', [
+        { x: farmNames, y: lowC, name: 'Bajo', type: 'bar', marker: { color: '#22c55e' } },
+        { x: farmNames, y: medC, name: 'Medio', type: 'bar', marker: { color: '#f59e0b' } },
+        { x: farmNames, y: highC, name: 'Alto', type: 'bar', marker: { color: '#f97316' } },
+        { x: farmNames, y: critC, name: 'Crítico', type: 'bar', marker: { color: '#ef4444' } }
+    ], {
+        paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+        font: { color: '#64748b', size: 11 },
+        barmode: 'stack',
+        margin: { t: 10, b: 45, l: 50, r: 30 },
+        xaxis: { gridcolor: '#e2e8f0' },
+        yaxis: { gridcolor: '#e2e8f0', title: 'N° de piscinas', dtick: 1 },
+        legend: { orientation: 'h', y: -0.25 }
+    }, { responsive: true });
+}
+
+function selectPondFromMap(pid) {
+    state.currentPond = pid;
+    switchTab('monitor', null);
+    renderPondSelector();
+    updateMonitorTab();
+}
+
+function refreshRiskMap() {
+    Object.keys(state.pondStates).forEach(pid => { if (!state.pondStates[pid].imported) state.pondStates[pid] = generatePondState(pid); });
+    renderRiskMap();
+    renderPondSelector();
+    updateMonitorTab();
+}
+
+// ============================================================
+// RECOMENDACIONES
+// ============================================================
+function renderActions() {
+    const st = state.pondStates[state.currentPond];
+    const sp = getSpecies(state.species);
+    if (!st) return;
+
+    let recommendedId = 0, confidence = 0.45, reasoning = '';
+    const s = st.sensors;
+    if (st.risk > 0.7 && s.ammonia > sp.rangos.ammonia.warn[1]) {
+        recommendedId = 3; confidence = 0.92;
+        reasoning = 'Probabilidad de brote crítica con amonio por encima del umbral de la especie (' + sp.rangos.ammonia.warn[1] + ' mg/L). El tratamiento reduce directamente la carga patogénica.';
+    } else if (st.risk > 0.7) {
+        recommendedId = 4; confidence = 0.85;
+        reasoning = 'Riesgo crítico sin causa única identificable para ' + sp.nombre + '. Reducir densidad disminuye estrés y transmisión.';
+    } else if (st.risk > 0.5 && s.turbidity > sp.rangos.turbidity.warn[1]) {
+        recommendedId = 1; confidence = 0.78;
+        reasoning = 'Turbidez elevada con riesgo alto. El intercambio de agua mejora la calidad rápidamente.';
+    } else if (st.risk > 0.5 && s.ammonia > sp.rangos.ammonia.ok[1]) {
+        recommendedId = 1; confidence = 0.75;
+        reasoning = 'Amonio por encima del óptimo (' + sp.rangos.ammonia.ok[1] + ' mg/L) con riesgo alto. Se recomienda aumentar el flujo de agua.';
+    } else if (st.risk > 0.3 && st.density > 80) {
+        recommendedId = 4; confidence = 0.62;
+        reasoning = 'Densidad alta con riesgo moderado. Reducir densidad previene estrés futuro en ' + sp.nombre + '.';
+    } else if (st.risk > 0.3 && s.feed > 4) {
+        recommendedId = 2; confidence = 0.58;
+        reasoning = 'Alimentación elevada con riesgo moderado. Reducir 20% disminuye el exceso de nutrientes.';
+    } else {
+        recommendedId = 0; confidence = 0.45;
+        reasoning = 'Condiciones dentro de los rangos óptimos de ' + sp.nombre + '. Mantener monitoreo continuo y protocolos de bioseguridad estándar.';
+    }
+
+    const confBadge = document.getElementById('recommendationConfidence');
+    confBadge.textContent = 'Confianza: ' + (confidence * 100).toFixed(0) + '%';
+    confBadge.className = 'badge ' + (confidence > 0.8 ? 'badge-bajo' : confidence > 0.6 ? 'badge-medio' : 'badge-alto');
+
+    document.getElementById('actionList').innerHTML = ACTIONS.map(a => {
+        const isRec = a.id === recommendedId;
+        return '<div class="action-item' + (isRec ? ' rec' : '') + '" onclick="showActionDetail(' + a.id + ',' + recommendedId + ',\'' + reasoning.replace(/'/g, '') + '\',' + confidence + ')">' +
+            '<span class="action-icon">' + a.icon + '</span>' +
+            '<div class="action-info" style="flex:1"><div class="action-name">' + a.name + (isRec ? ' ⭐' : '') + '</div><div class="action-desc">' + a.desc + '</div></div>' +
+            '<div class="action-cost">' + (a.cost < 0 ? '-$' + Math.abs(a.cost) : '$' + a.cost) + ' ' + a.costUnit + '</div>' +
+            '</div>';
+    }).join('');
+
+    showActionDetail(recommendedId, recommendedId, reasoning, confidence);
+    renderActionHistoryChart();
+}
+
+function showActionDetail(actionId, recommendedId, reasoning, confidence) {
+    const action = ACTIONS[actionId];
+    const st = state.pondStates[state.currentPond];
+    const sp = getSpecies(state.species);
+    if (!action || !st) return;
+    const isRec = actionId === recommendedId;
+    const duration = 7;
+    const actionCost = action.cost > 0 ? action.cost * (action.costUnit.includes('día') ? duration : 1) : Math.abs(action.cost) * duration;
+    const mortRed = isRec ? rand(3, 12) : rand(0, 4);
+    const lossesAvoided = mortRed * st.density * 1000 * 0.012;
+    const net = lossesAvoided - actionCost;
+    const roi = actionCost > 0 ? (net / actionCost * 100) : 0;
+
+    document.getElementById('actionDetail').innerHTML =
+        '<div style="text-align:center;margin-bottom:16px;">' +
+        '<div style="font-size:46px;">' + action.icon + '</div>' +
+        '<div style="font-size:17px;font-weight:800;margin-top:6px;">' + action.name + '</div>' +
+        (isRec ? '<div class="badge badge-bajo" style="margin-top:8px;">⭐ Acción recomendada para ' + sp.nombre + '</div>' : '') +
+        '</div>' +
+        '<div style="background:var(--panel-soft);border-radius:10px;padding:13px;margin-bottom:12px;font-size:12.5px;color:var(--ink-soft);line-height:1.55;"><b>Justificación:</b> ' + reasoning + '</div>' +
+        '<div class="grid-2" style="gap:10px;">' +
+        '<div style="background:var(--panel-soft);border-radius:10px;padding:11px;text-align:center;"><div style="font-size:11px;color:var(--ink-muted);font-weight:700;">Costo (7 días)</div><div style="font-size:19px;font-weight:800;color:#b45309;">' + fmtMoney(actionCost) + '</div></div>' +
+        '<div style="background:var(--panel-soft);border-radius:10px;padding:11px;text-align:center;"><div style="font-size:11px;color:var(--ink-muted);font-weight:700;">Pérdidas evitadas</div><div style="font-size:19px;font-weight:800;color:#15803d;">' + fmtMoney(lossesAvoided) + '</div></div>' +
+        '<div style="background:var(--panel-soft);border-radius:10px;padding:11px;text-align:center;"><div style="font-size:11px;color:var(--ink-muted);font-weight:700;">Beneficio neto</div><div style="font-size:19px;font-weight:800;color:' + (net >= 0 ? '#15803d' : '#b91c1c') + ';">' + fmtMoney(net) + '</div></div>' +
+        '<div style="background:var(--panel-soft);border-radius:10px;padding:11px;text-align:center;"><div style="font-size:11px;color:var(--ink-muted);font-weight:700;">ROI</div><div style="font-size:19px;font-weight:800;color:' + (roi >= 0 ? '#15803d' : '#b91c1c') + ';">' + roi.toFixed(0) + '%</div></div>' +
+        '</div>' +
+        '<div style="margin-top:12px;font-size:11.5px;color:var(--ink-muted);">Piscina <b>' + state.currentPond + '</b> · Especie: <b>' + sp.nombre + '</b> · Prob. brote: <b>' + (st.risk * 100).toFixed(1) + '%</b> · Confianza: <b>' + (confidence * 100).toFixed(0) + '%</b></div>';
+}
+
+function renderActionHistoryChart() {
+    const days = [], acts = [];
+    const names = ['Sin acción', 'Flujo agua', 'Alimentación', 'Tratamiento', 'Reducir densidad'];
+    const colors = ['#0ea5e9', '#14b8a6', '#22c55e', '#f59e0b', '#ef4444'];
+    for (let d = 29; d >= 0; d--) { days.push('D-' + d); acts.push(Math.floor(rand(0, 5))); }
+    Plotly.react('chartActionHistory', [{
+        x: days, y: acts, type: 'scatter', mode: 'markers',
+        marker: { size: 9, color: acts.map(a => colors[a]) },
+        text: acts.map(a => names[a])
+    }], {
+        paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+        font: { color: '#64748b', size: 11 },
+        margin: { t: 10, b: 45, l: 55, r: 30 },
+        xaxis: { gridcolor: '#e2e8f0' },
+        yaxis: { gridcolor: '#e2e8f0', tickvals: [0, 1, 2, 3, 4], ticktext: names, dtick: 1 }
+    }, { responsive: true });
+}
+
+// ============================================================
+// SIMULADOR ECONÓMICO
+// ============================================================
+function initEconomicTab() {
+    const select = document.getElementById('simPond');
+    select.innerHTML = ALL_PONDS.map(p => '<option value="' + p.pondId + '"' + (p.pondId === state.currentPond ? ' selected' : '') + '>' + p.pondId + ' — ' + p.farmName + '</option>').join('');
+    renderPolicyComparison();
+    renderEconProjection();
+}
+
+function runSimulation() {
+    const pondId = document.getElementById('simPond').value;
+    const actionId = parseInt(document.getElementById('simAction').value);
+    const duration = parseInt(document.getElementById('simDuration').value) || 30;
+    const st = state.pondStates[pondId];
+    const sp = getSpecies(state.species);
+    const action = ACTIONS[actionId];
+
+    const actionCost = action.cost > 0 ? action.cost * (action.costUnit.includes('día') ? duration : 1) : Math.abs(action.cost) * duration;
+    const mortRed = actionId === 3 ? rand(5, 15) : actionId === 4 ? rand(4, 10) : actionId === 1 ? rand(2, 6) : actionId === 2 ? rand(1, 3) : 0;
+    const newMort = Math.max(0.5, st.mortality - mortRed);
+    // Valor de la biomasa protegida usando precio por especie
+    const biomassValue = st.density * 1000 * 0.012 * sp.precio_usd_kg;
+    const lossesAvoided = mortRed / 100 * biomassValue * (duration / 30);
+    const net = lossesAvoided - actionCost;
+    const roi = actionCost > 0 ? (net / actionCost * 100) : 0;
+
+    document.getElementById('simLossValue').textContent = fmtMoney(lossesAvoided);
+    document.getElementById('simCostValue').textContent = fmtMoney(actionCost);
+    document.getElementById('simNetValue').textContent = fmtMoney(net);
+    document.getElementById('simNetValue').style.color = net >= 0 ? '#15803d' : '#b91c1c';
+    document.getElementById('simNetKpi').className = 'kpi ' + (net >= 0 ? 'green' : 'red');
+    document.getElementById('simROIValue').innerHTML = roi.toFixed(1) + '<span class="kpi-unit">%</span>';
+    document.getElementById('simROIValue').style.color = roi >= 0 ? '#15803d' : '#b91c1c';
+    document.getElementById('simRoiKpi').className = 'kpi ' + (roi >= 0 ? 'green' : 'red');
+    toast('Simulación calculada con precio de ' + sp.nombre + ' ($' + sp.precio_usd_kg + '/kg)', 'ok');
+    renderPolicyComparison();
+    renderEconProjection();
+}
+
+function renderPolicyComparison() {
+    const pondId = document.getElementById('simPond') ? document.getElementById('simPond').value : state.currentPond;
+    const st = state.pondStates[pondId];
+    const sp = getSpecies(state.species);
+    const duration = parseInt(document.getElementById('simDuration') ? document.getElementById('simDuration').value : 30) || 30;
+    if (!st) return;
+
+    const rows = ACTIONS.map(a => {
+        const cost = a.cost > 0 ? a.cost * (a.costUnit.includes('día') ? duration : 1) : Math.abs(a.cost) * duration;
+        const mortRed = a.id === 3 ? rand(5, 15) : a.id === 4 ? rand(4, 10) : a.id === 1 ? rand(2, 6) : a.id === 2 ? rand(1, 3) : 0;
+        const finalMort = Math.max(0.5, st.mortality - mortRed);
+        const biomassValue = st.density * 1000 * 0.012 * sp.precio_usd_kg;
+        const avoided = mortRed / 100 * biomassValue * (duration / 30);
+        const net = avoided - cost;
+        const roi = cost > 0 ? (net / cost * 100) : 0;
+        return '<tr><td>' + a.name + '</td><td>' + fmtMoney(cost) + '</td><td>' + fmtMoney(avoided) + '</td><td class="' + (net >= 0 ? 'pos' : 'neg') + '">' + fmtMoney(net) + '</td><td class="' + (roi >= 0 ? 'pos' : 'neg') + '">' + roi.toFixed(1) + '%</td><td>' + finalMort.toFixed(1) + '%</td></tr>';
+    }).join('');
+    document.getElementById('policyTableBody').innerHTML = rows;
+}
+
+function renderEconProjection() {
+    const sp = getSpecies(state.species);
+    const days = [];
+    for (let d = 0; d <= 120; d += 10) days.push('D' + d);
+    const traces = ACTIONS.map((a, i) => {
+        const data = days.map((_, idx) => {
+            const base = 50000 - idx * 300 * (sp.precio_usd_kg / 6.5);
+            const cost = a.cost > 0 ? a.cost * (a.costUnit.includes('día') ? idx * 10 : 1) : Math.abs(a.cost) * idx * 10;
+            const savings = (i === 3 ? 8000 : i === 4 ? 6000 : i === 1 ? 3000 : i === 2 ? 1500 : 0) * idx * (sp.precio_usd_kg / 6.5);
+            return base - cost + savings;
+        });
+        return { x: days, y: data, name: a.name, type: 'scatter', mode: 'lines', line: { width: 2 } };
+    });
+    Plotly.react('chartEconProjection', traces, {
+        paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+        font: { color: '#64748b', size: 11 },
+        margin: { t: 10, b: 45, l: 65, r: 30 },
+        xaxis: { gridcolor: '#e2e8f0', title: 'Días de cultivo' },
+        yaxis: { gridcolor: '#e2e8f0', title: 'Ganancia neta ($)' },
+        legend: { orientation: 'h', y: -0.25 }
+    }, { responsive: true });
+}
+
+// ============================================================
+// EVENTOS DE IMPORTACIÓN (drag & drop)
+// ============================================================
+function setupDropzone() {
+    const dz = document.getElementById('dropzone');
+    const input = document.getElementById('fileInput');
+    input.addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) { toast('El archivo supera 5 MB', 'err'); return; }
+        const reader = new FileReader();
+        reader.onload = e => handleCSV(e.target.result);
+        reader.readAsText(file, 'utf-8');
+        this.value = '';
+    });
+    ['dragover', 'dragenter'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('dragover'); }));
+    ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('dragover'); }));
+    dz.addEventListener('drop', e => {
+        const file = e.dataTransfer.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) { toast('El archivo supera 5 MB', 'err'); return; }
+        const reader = new FileReader();
+        reader.onload = ev => handleCSV(ev.target.result);
+        reader.readAsText(file, 'utf-8');
+    });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+initPondStates();
+initSpeciesSelect();
+setupDropzone();
+// Restaurar datos importados guardados
+try {
+    const saved = localStorage.getItem('bs_imported');
+    if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.readings && parsed.readings.length) {
+            applyImportedData(parsed.readings);
+            renderImportTable(parsed.readings, []);
+            toast('Datos importados restaurados (' + parsed.readings.length + ' registros)', 'info');
+        }
+    }
+} catch (e) { /* ignore */ }
+updateDataPill();
+renderPondSelector();
+updateMonitorTab();
+</script>
 </body>
 </html>
