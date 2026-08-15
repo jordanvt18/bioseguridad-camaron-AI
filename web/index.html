@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulador de Bioseguridad Inteligente para Camarón</title>
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="plotly.min.js"></script>
+    <script>if (typeof Plotly === 'undefined') { document.write('<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"><\/script>'); }</script>
     <style>
         :root {
             --bg-primary: #0a1929;
@@ -714,7 +715,7 @@
         const days = Math.floor(rand(20, 110));
 
         const ph = risk > 0.6 ? rand(6.0, 6.8) : rand(7.2, 8.4);
-        const do = risk > 0.6 ? rand(2.0, 3.5) : rand(4.5, 7.5);
+        const doLevel = risk > 0.6 ? rand(2.0, 3.5) : rand(4.5, 7.5);
         const salinity = rand(28, 38);
         const turbidity = risk > 0.5 ? rand(60, 120) : rand(10, 45);
         const temp = rand(26, 32);
@@ -722,7 +723,7 @@
         const feed = density * 0.05 * rand(0.8, 1.2);
         const growth = days * 0.2;
 
-        return { pondId, risk, mortality, density, days, sensors: { ph, do, salinity, turbidity, temp, ammonia, feed, growth } };
+        return { pondId, risk, mortality, density, days, sensors: { ph, do: doLevel, salinity, turbidity, temp, ammonia, feed, growth } };
     }
 
     function getRiskLevel(prob) {
