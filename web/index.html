@@ -417,10 +417,10 @@
 
     <!-- Navigation -->
     <div class="nav-tabs">
-        <div class="nav-tab active" onclick="switchTab('monitor')">📡 Monitoreo</div>
-        <div class="nav-tab" onclick="switchTab('risk')">⚠️ Mapa de Riesgo</div>
-        <div class="nav-tab" onclick="switchTab('actions')">🎯 Recomendaciones</div>
-        <div class="nav-tab" onclick="switchTab('economic')">💰 Simulador Económico</div>
+        <div class="nav-tab active" onclick="switchTab('monitor', this)">📡 Monitoreo</div>
+        <div class="nav-tab" onclick="switchTab('risk', this)">⚠️ Mapa de Riesgo</div>
+        <div class="nav-tab" onclick="switchTab('actions', this)">🎯 Recomendaciones</div>
+        <div class="nav-tab" onclick="switchTab('economic', this)">💰 Simulador Económico</div>
     </div>
 
     <div class="main-content">
@@ -762,11 +762,17 @@
     // ============================================
     // TAB SWITCHING
     // ============================================
-    function switchTab(tab) {
+    function switchTab(tab, el) {
         document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
         document.getElementById('tab-' + tab).classList.add('active');
-        event.target.classList.add('active');
+        if (el) {
+            el.classList.add('active');
+        } else {
+            const tabs = document.querySelectorAll('.nav-tab');
+            const idx = ['monitor', 'risk', 'actions', 'economic'].indexOf(tab);
+            if (tabs[idx]) tabs[idx].classList.add('active');
+        }
 
         if (tab === 'risk') renderRiskMap();
         if (tab === 'actions') renderActions();
