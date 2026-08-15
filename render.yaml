@@ -1,0 +1,36 @@
+# Render Blueprint — despliegue de la API FastAPI con soporte WebSocket
+# https://render.com/docs/blueprint-spec
+#
+# Cómo usar:
+#   1. Sube este repositorio a GitHub
+#   2. En Render: New + -> Blueprint -> selecciona el repo
+#   3. Render crea el servicio automáticamente
+#   4. Copia la URL del servicio (ej. https://bioseguridad-api.onrender.com)
+#      y pégala en el dashboard (Monitoreo -> Streaming en vivo)
+
+services:
+  - type: web
+    name: bioseguridad-api
+    runtime: python
+    plan: free
+    # Solo dependencias runtime (sin torch): builds mucho más rápidos
+    buildCommand: pip install -r src/api/requirements.txt
+    startCommand: uvicorn src.api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /
+    envVars:
+      - key: MODEL_PATH
+        value: ./models
+      - key: DATA_PATH
+        value: ./data
+      - key: LOG_LEVEL
+        value: INFO
+      - key: MQTT_ENABLED
+        value: "0"
+      # Para sensores reales, crea un broker MQTT en la nube (EMQX/HiveMQ Cloud)
+      # y activa el puente:
+      # - key: MQTT_ENABLED
+      #   value: "1"
+      # - key: MQTT_BROKER
+      #   value: broker.hivemq.com
+      # - key: MQTT_PORT
+      #   value: "1883"

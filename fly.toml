@@ -1,0 +1,41 @@
+# Fly.io — despliegue de la API FastAPI con WebSocket
+# https://fly.io/docs/reference/configuration/
+#
+# Cómo usar:
+#   fly launch --no-deploy
+#   fly deploy
+#
+# Nota: el Dockerfile expone y escucha en el puerto 8000, que debe coincidir
+# con http_service.internal_port (ya coincide).
+
+app = "bioseguridad-camaron-api"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+
+[env]
+  MODEL_PATH = "./models"
+  DATA_PATH = "./data"
+  LOG_LEVEL = "INFO"
+  MQTT_ENABLED = "0"
+  # Para sensores reales:
+  # MQTT_BROKER = "broker.hivemq.com"
+  # MQTT_PORT = "1883"
+  # MQTT_ENABLED = "1"

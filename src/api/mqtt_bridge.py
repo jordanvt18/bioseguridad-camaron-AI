@@ -33,6 +33,7 @@ el streamer simulado.
 from __future__ import annotations
 
 import asyncio
+import datetime
 import json
 import logging
 import os
@@ -67,27 +68,34 @@ class MqttBridge:
         self._loop: Optional[asyncio.AbstractEventLoop] = None
         self.running = False
 
-    def _on_connect(self, client: Any, userdata: Any, flags: Any, rc: int) -> None:
-        if rc == 0:
+    def _on_connect(self, client: Any, userdata: Any, flags: Any, reason_code: Any, properties: Any) -> None:
+        if not reason_code.is_failure:
             logger.info("MQTT conectado a %s:%s", self.broker, self.port)
             client.subscribe(self.topic_prefix + "+")
         else:
-            logger.error("MQTT error de conexión, código %s", rc)
+            logger.error("MQTT error de conexión, código %s", reason_code)
 
     def _on_message(self, client: Any, userdata: Any, msg: Any) -> None:
         try:
             payload = json.loads(msg.payload.decode("utf-8"))
             pond_id = msg.topic.removeprefix(self.topic_prefix)
+            if not isinstance(payload, dict):
+                raise ValueError("payload debe ser un objeto JSON")
+            # Normalizar el contrato: species y timestamp a nivel superior,
+            # el resto de sensores dentro de `sensors` (igual que el streamer).
+            species = payload.pop("species", None)
             reading = {
                 "type": "reading",
                 "source": "mqtt",
                 "pond_id": pond_id,
+                "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "species": species,
                 "sensors": payload,
-                "outbreak_probability": None,  # el backend la calcula
+                "outbreak_probability": None,  # el dashboard la calcula
             }
             if self._loop and not self.queue.full():
                 self._loop.call_soon_threadsafe(self.queue.put_nowait, reading)
-        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+        except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as exc:
             logger.warning("MQTT payload inválido en %s: %s", msg.topic, exc)
 
     async def start(self) -> None:
@@ -101,7 +109,7 @@ class MqttBridge:
             return
 
         self._loop = asyncio.get_running_loop()
-        self._client = mqtt.Client()
+        self._client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
         if self.username:
             self._client.username_pw_set(self.username, self.password)
         self._client.on_connect = self._on_connect
