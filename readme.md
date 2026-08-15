@@ -72,6 +72,39 @@ uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
 
 Abrir `web/index.html` directamente en el navegador (versión estática con datos simulados), o servirlo vía el contenedor nginx de docker-compose.
 
+### ¿Cómo agrego datos reales de mis piscinas?
+
+El dashboard tiene la pestaña **📥 Importar Datos** con 3 vías:
+
+1. **CSV** — descarga la plantilla desde el dashboard (botón *Descargar plantilla CSV*), completa tus lecturas y sube el archivo (arrastrar o clic). Columnas requeridas:
+
+   ```
+   timestamp,pond_id,ph,dissolved_oxygen,salinity,turbidity,temperature,ammonia,outbreak
+   2025-06-01 06:00,P-001,7.82,5.21,30.1,24.5,29.1,0.35,0
+   ```
+
+2. **Entrada manual** — formulario para registrar una lectura puntual de una piscina.
+
+3. **API** — pega la URL de tu API FastAPI desplegada (requiere CORS, ya habilitado) para sincronizar el estado.
+
+Los datos se validan fila por fila (rangos físicos), se guardan en el navegador (localStorage) y alimentan todos los gráficos, el mapa de riesgo y las recomendaciones. La cabecera muestra la fuente: *Simulada* o *Real (N registros)*.
+
+### Especies soportadas
+
+El selector de especie en la cabecera ajusta umbrales de riesgo, curva de crecimiento, tallas y precio. Incluye las especies de Ecuador y extrapolación a otras especies marinas:
+
+| Especie | Científico | Temp. óptima | Origen |
+|---------|-----------|--------------|--------|
+| 🦐 Camarón Blanco | *Litopenaeus vannamei* | 26–32 °C | 🇪🇨 Ecuador (dominante) |
+| 🦐 Camarón Azul | *Penaeus stylirostris* | 24–30 °C | Pacífico americano |
+| 🦐 Camarón Tigre | *Penaeus monodon* | 27–32 °C | Indo-Pacífico |
+| 🐟 Tilapia | *Oreochromis niloticus* | 25–32 °C | Extrapolación |
+| 🐟 Trucha | *Oncorhynchus mykiss* | 10–18 °C | Extrapolación |
+| 🐟 Salmón | *Salmo salar* | 6–14 °C | Extrapolación |
+| 🐟 Corvina/Róbalo | *Centropomus viridis* | 24–30 °C | Pacífico ecuatoriano |
+
+La pestaña **🦐 Especies** muestra el catálogo completo, parámetros óptimos, tallas comerciales ecuatorianas (colas por libra: U/10 → 91/120) y la curva de crecimiento proyectada.
+
 ## Pipeline de datos (ETL)
 
 ```bash
