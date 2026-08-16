@@ -50,6 +50,18 @@ SPECIES_RANGES: dict[str, dict[str, list[float]]] = {
         "ph": [7.0, 8.5], "dissolved_oxygen": [4.0, 8.0], "salinity": [5.0, 35.0],
         "turbidity": [0.0, 40.0], "temperature": [24.0, 30.0], "ammonia": [0.0, 0.6],
     },
+    "atun": {
+        "ph": [7.8, 8.3], "dissolved_oxygen": [5.0, 8.0], "salinity": [33.0, 37.0],
+        "turbidity": [0.0, 20.0], "temperature": [24.0, 30.0], "ammonia": [0.0, 0.4],
+    },
+    "dorado": {
+        "ph": [7.8, 8.3], "dissolved_oxygen": [5.0, 8.0], "salinity": [15.0, 35.0],
+        "turbidity": [0.0, 30.0], "temperature": [24.0, 28.0], "ammonia": [0.0, 0.5],
+    },
+    "concha_prieta": {
+        "ph": [7.6, 8.0], "dissolved_oxygen": [3.5, 4.5], "salinity": [20.0, 28.0],
+        "turbidity": [0.0, 60.0], "temperature": [25.0, 28.0], "ammonia": [0.0, 0.8],
+    },
 }
 
 SENSOR_KEYS = ["ph", "dissolved_oxygen", "salinity", "turbidity", "temperature", "ammonia"]

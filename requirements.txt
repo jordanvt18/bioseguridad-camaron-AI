@@ -13,8 +13,9 @@ torch
 torchvision
 
 # Reinforcement Learning
-stable-baselines3
-gymnasium
+# SB3 >= 2.9 requiere gymnasium 1.x; SB3 2.4 exigía gymnasium<1.1
+stable-baselines3>=2.9
+gymnasium>=1.0,<2.0
 
 # Data processing
 pandas
