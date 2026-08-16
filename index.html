@@ -827,6 +827,75 @@ const SPECIES = [
             { talla: '800 g – 1.2 kg', g: '800–1200', uso: 'Mercado común' },
             { talla: '500–800 g', g: '500–800', uso: 'Mercado local' }
         ]
+    },
+    {
+        id: 'atun', emoji: '🐟',
+        nombre: 'Atún Aleta Amarilla',
+        cientifico: 'Thunnus albacares',
+        origen: 'Pacífico Oriental · pesca + maricultura experimental (extrapolación)',
+        tipo: 'Pez · Scombridae',
+        ciclo: 270, crecimiento: 45, talla_cosecha: '15–50 kg',
+        precio_usd_kg: 2.3, salinidad_tipo: 'Marino oceánico (33–37 ppt)',
+        rangos: {
+            ph: { ok: [7.8, 8.3], warn: [7.5, 8.6] },
+            dissolved_oxygen: { ok: [5.0, 8.0], warn: [4.0, 9.0] },
+            salinity: { ok: [33, 37], warn: [30, 39] },
+            turbidity: { ok: [0, 20], warn: [20, 50] },
+            temperature: { ok: [24, 30], warn: [18, 31] },
+            ammonia: { ok: [0, 0.4], warn: [0.4, 1.0] }
+        },
+        detalle: 'Especie oceánica de natación continua con altísima demanda de oxígeno (larvas ≥6 mg/L) y pH marino ~8.2. Ecuador desembarcó ~333.000 t en 2024; la maricultura (ranching en jaulas) es aún experimental — candidata a extrapolación fase I+D, alto Capex.',
+        tallas: [
+            { talla: '> 50 kg', g: '50000+', uso: 'Exportación premium' },
+            { talla: '15–50 kg', g: '15000–50000', uso: 'Enlatado/exportación' },
+            { talla: '8–15 kg', g: '8000–15000', uso: 'Mercado común' }
+        ]
+    },
+    {
+        id: 'dorado', emoji: '🐠',
+        nombre: 'Dorado / Mahi-mahi',
+        cientifico: 'Coryphaena hippurus',
+        origen: 'Pacífico ecuatoriano · pesca + acuicultura en desarrollo (extrapolación)',
+        tipo: 'Pez · Coryphaenidae',
+        ciclo: 240, crecimiento: 6, talla_cosecha: '4–15 kg',
+        precio_usd_kg: 3.8, salinidad_tipo: 'Eurihalino (15–35 ppt)',
+        rangos: {
+            ph: { ok: [7.8, 8.3], warn: [7.5, 8.6] },
+            dissolved_oxygen: { ok: [5.0, 8.0], warn: [3.5, 9.5] },
+            salinity: { ok: [15, 35], warn: [5, 40] },
+            turbidity: { ok: [0, 30], warn: [30, 70] },
+            temperature: { ok: [24, 28], warn: [20, 30] },
+            ammonia: { ok: [0, 0.5], warn: [0.5, 1.2] }
+        },
+        detalle: 'Pez pelágico eurihalino (tolera 15–35 ppt, incluso <5 ppt) de crecimiento récord: 1–1.5 kg en 6–8 meses en hatchery experimental (U. Miami). Ecuador exporta ~2.800–5.500 t/año; acuicultura prometedora, aún no comercial.',
+        tallas: [
+            { talla: '> 15 kg', g: '15000+', uso: 'Exportación premium' },
+            { talla: '4–15 kg', g: '4000–15000', uso: 'Mercado común' },
+            { talla: '1–4 kg', g: '1000–4000', uso: 'Mercado local' }
+        ]
+    },
+    {
+        id: 'concha_prieta', emoji: '🦪',
+        nombre: 'Concha Prieta',
+        cientifico: 'Anadara tuberculosa',
+        origen: 'Manglares ecuatorianos · recolección y repoblamiento (extrapolación)',
+        tipo: 'Molusco · Arcidae',
+        ciclo: 300, crecimiento: 0.06, talla_cosecha: '5–7 cm',
+        precio_usd_kg: 5.0, salinidad_tipo: 'Estuarino-manglar (20–28 ppt)',
+        rangos: {
+            ph: { ok: [7.6, 8.0], warn: [7.0, 8.5] },
+            dissolved_oxygen: { ok: [3.5, 4.5], warn: [2.5, 5.5] },
+            salinity: { ok: [20, 28], warn: [12, 32] },
+            turbidity: { ok: [0, 60], warn: [60, 120] },
+            temperature: { ok: [25, 28], warn: [22, 30] },
+            ammonia: { ok: [0, 0.8], warn: [0.8, 2.0] }
+        },
+        detalle: 'Icono del manglar ecuatoriano (concheras): bivalvo filtrador que tolera OD bajo (3.5–4.0 mg/L) y salinidad estuarina (24–25 ppt óptimo, MAE 2018). Talla mínima legal 45 mm; se vende por ciento (USD 12–13.6/100 uds). Repoblamiento en canastas ~6 meses.',
+        tallas: [
+            { talla: '> 6 cm', g: '60mm+', uso: 'Premium (cevicherías)' },
+            { talla: '5–6 cm', g: '50–60mm', uso: 'Mercado común' },
+            { talla: '4.5–5 cm', g: '45–50mm', uso: 'Talla mínima legal (45mm)' }
+        ]
     }
 ];
 
